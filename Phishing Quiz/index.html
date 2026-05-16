@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhishingLab — Simulador de Cibersegurança</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem}
+.app{width:100%;max-width:720px}
+.landing{background:#fff;border:1px solid #e2e4e8;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.landing-hero{background:#1a1a2e;padding:2.5rem 2rem 2rem;text-align:center;position:relative;overflow:hidden}
+.landing-hero::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,.03) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,.03) 40px)}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(226,75,74,.15);border:1px solid rgba(226,75,74,.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:600;color:#f87171;letter-spacing:.04em;margin-bottom:1rem;position:relative}
+.hero-title{font-size:30px;font-weight:700;color:#fff;letter-spacing:-.5px;margin-bottom:.5rem;position:relative}
+.hero-title span{color:#e24b4a}
+.hero-sub{font-size:14px;color:#9ca3af;line-height:1.65;max-width:420px;margin:0 auto;position:relative}
+.landing-body{padding:2rem}
+.landing-label{font-size:12px;font-weight:600;color:#374151;letter-spacing:.04em;text-transform:uppercase;margin-bottom:.5rem;display:block}
+.landing-input{width:100%;padding:.75rem 1rem;border:1.5px solid #e2e4e8;border-radius:10px;font-size:14px;color:#111827;outline:none;transition:border-color .15s;margin-bottom:1.25rem;font-family:inherit;background:#fff}
+.landing-input:focus{border-color:#185FA5}
+.landing-input::placeholder{color:#b0b7c3}
+.landing-hint{font-size:11.5px;color:#9ca3af;margin-top:-1rem;margin-bottom:1.25rem;line-height:1.5}
+.start-btn{width:100%;padding:.9rem;background:#1a1a2e;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s;letter-spacing:-.1px}
+.start-btn:hover{opacity:.88}
+
+.top-bar{display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;background:#fff;border:1px solid #e2e4e8;border-radius:10px;padding:.75rem 1rem}
+.top-logo{font-size:13px;font-weight:700;color:#1a1a2e;letter-spacing:-.2px;white-space:nowrap}
+.top-logo span{color:#e24b4a}
+.prog-wrap{flex:1;height:5px;background:#eef0f4;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:#185FA5;border-radius:3px;transition:width .4s ease}
+.top-stat{font-size:12px;color:#6b7280;white-space:nowrap}
+.top-stat b{color:#1a1a2e;font-weight:600}
+.email-client{background:#fff;border:1px solid #e2e4e8;border-radius:12px;overflow:hidden;margin-bottom:1rem;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.client-bar{background:#f8f9fb;border-bottom:1px solid #e2e4e8;padding:.5rem .875rem;display:flex;align-items:center;gap:8px}
+.client-dot{width:10px;height:10px;border-radius:50%}
+.client-dot.r{background:#ff5f57}.client-dot.y{background:#febc2e}.client-dot.g{background:#28c840}
+.client-bar-label{font-size:11px;color:#9ca3af;margin-left:4px;flex:1;text-align:center}
+.email-header{padding:1rem 1.25rem;border-bottom:1px solid #eef0f4}
+.email-subject{font-size:16px;font-weight:600;color:#111827;margin-bottom:.875rem;line-height:1.3}
+.email-field{display:flex;gap:6px;font-size:12.5px;margin-bottom:4px;align-items:baseline}
+.email-field-lbl{color:#9ca3af;width:34px;flex-shrink:0;font-size:11px;padding-top:1px}
+.email-field-val{color:#374151;line-height:1.5}
+.sender-name{font-weight:600;color:#111827}
+.sender-addr{color:#6b7280;font-size:11.5px;margin-left:4px}
+.email-body-wrap{padding:1.25rem;max-height:300px;overflow-y:auto}
+.email-body-wrap p{font-size:13.5px;color:#374151;line-height:1.7;margin-bottom:.75em}
+.email-body-wrap p:last-child{margin-bottom:0}
+.org-banner{font-size:13px;font-weight:700;letter-spacing:.5px;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid;display:inline-block}
+.email-cta-btn{display:inline-block;padding:10px 22px;border-radius:5px;font-size:13px;font-weight:600;cursor:default;margin:6px 0}
+.email-link-shown{font-size:11px;margin-top:2px;word-break:break-all}
+.email-link-shown.suspicious{color:#b91c1c;font-weight:500}
+.email-link-shown.safe{color:#059669}
+.email-footer-mini{margin-top:1rem;padding-top:.75rem;border-top:1px solid #f3f4f6;font-size:11px;color:#9ca3af;line-height:1.5}
+.alert-box{background:#fef3cd;border-left:3px solid #f59e0b;border-radius:0 5px 5px 0;padding:.5rem .75rem;font-size:12px;color:#92400e;margin-bottom:.75em}
+.info-row{font-size:12.5px;background:#f8f9fb;border-radius:6px;padding:.625rem .75rem;line-height:2;margin-bottom:.75em}
+.verdict-area{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.vbtn{padding:.875rem;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;background:#fff}
+.vbtn:disabled{opacity:.5;cursor:not-allowed}
+.vbtn.phish{border-color:#e24b4a;color:#a32d2d}
+.vbtn.phish:hover:not(:disabled){background:#fef2f2}
+.vbtn.real{border-color:#059669;color:#065f46}
+.vbtn.real:hover:not(:disabled){background:#f0fdf4}
+.feedback{border-radius:12px;padding:1rem 1.125rem;margin-bottom:1rem}
+.feedback.correct{background:#f0fdf4;border:1.5px solid #86efac}
+.feedback.wrong{background:#fef2f2;border:1.5px solid #fca5a5}
+.feedback-top{display:flex;align-items:center;gap:10px;margin-bottom:.75rem}
+.feedback-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.feedback.correct .feedback-icon{background:#bbf7d0}
+.feedback.wrong .feedback-icon{background:#fecaca}
+.feedback-verdict{font-size:15px;font-weight:700}
+.feedback.correct .feedback-verdict{color:#166534}
+.feedback.wrong .feedback-verdict{color:#991b1b}
+.feedback-explain{font-size:13px;color:#374151;line-height:1.65;margin-bottom:.875rem}
+.clue-list{list-style:none;margin-bottom:.875rem}
+.clue-item{font-size:12.5px;padding:5px 0 5px 22px;position:relative;line-height:1.5;color:#374151;border-bottom:1px solid rgba(0,0,0,.04)}
+.clue-item:last-child{border-bottom:none}
+.clue-item::before{position:absolute;left:0;font-size:13px}
+.clue-item.bad::before{content:'🚨'}
+.clue-item.good::before{content:'✅'}
+.clue-item.tip::before{content:'💡'}
+.next-btn{width:100%;padding:.75rem;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:#1a1a2e;color:#fff;border:none;transition:opacity .15s}
+.next-btn:hover{opacity:.88}
+.counter-pill{display:inline-flex;align-items:center;gap:6px;background:#eef0f4;border-radius:20px;padding:4px 12px;font-size:12px;color:#6b7280;margin-bottom:.875rem}
+.counter-pill b{color:#111827}
+.final{background:#fff;border:1px solid #e2e4e8;border-radius:12px;padding:2.5rem 1.5rem;text-align:center}
+.final-ring{width:120px;height:120px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 1.25rem;border:6px solid}
+.final-num{font-size:36px;font-weight:700}
+.final-denom{font-size:14px;color:#6b7280}
+.final-msg{font-size:16px;font-weight:600;margin-bottom:.5rem}
+.final-sub{font-size:13.5px;color:#6b7280;line-height:1.65;margin-bottom:1.5rem;max-width:480px;margin-left:auto;margin-right:auto}
+.final-tips{background:#f8f9fb;border-radius:10px;padding:1rem;text-align:left;margin-bottom:1.5rem}
+.final-tips-title{font-size:12px;font-weight:700;color:#374151;letter-spacing:.04em;text-transform:uppercase;margin-bottom:.625rem}
+.tip-row{font-size:12.5px;color:#4b5563;padding:4px 0;display:flex;gap:8px;line-height:1.5}
+.tip-row::before{content:'→';color:#9ca3af;flex-shrink:0}
+.result-breakdown{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem}
+.rb-card{padding:.75rem;border-radius:8px;font-size:12px}
+.rb-card.good{background:#f0fdf4;border:1px solid #86efac}
+.rb-card.bad{background:#fef2f2;border:1px solid #fca5a5}
+.rb-label{color:#6b7280;margin-bottom:4px}
+.rb-val{font-size:22px;font-weight:700}
+.rb-card.good .rb-val{color:#166534}
+.rb-card.bad .rb-val{color:#991b1b}
+.final-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.restart-btn{padding:.75rem;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s}
+.restart-btn.dark{background:#1a1a2e;color:#fff}
+.restart-btn.outline{background:#fff;color:#1a1a2e;border:1.5px solid #e2e4e8}
+.restart-btn:hover{opacity:.85}
+
+/* ── BROWSER STATUS BAR SIMULATION ── */
+#browser-status{
+  display:none;
+  background:#f0f0f0;
+  border-top:1px solid #d1d5db;
+  padding:4px 10px 5px;
+  font-family:'Courier New',Courier,monospace;
+  font-size:11.5px;
+  color:#1a1a1a;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#browser-status.visible{display:block}
+
+.email-cta-btn{cursor:pointer!important}
+.email-cta-btn:hover{filter:brightness(1.08)}
+.hover-hint{font-size:11px;color:#9ca3af;margin-bottom:.5rem;display:flex;align-items:center;gap:5px;font-style:italic}
+.email-link-shown{display:none}
+</style>
+
+<div class="app">
+<h1 style="position:absolute;left:-9999px">PhishingLab — Simulador de deteção de phishing para formação em cibersegurança</h1>
+
+<!-- LANDING -->
+<div id="landing-screen">
+<div class="landing">
+  <div class="landing-hero">
+    <div class="hero-badge">🎣 Formação em Cibersegurança</div>
+    <div class="hero-title">Phishing<span>Lab</span></div>
+    <div class="hero-sub">Consegue distinguir um email falso de um email real? Teste as suas competências com cenários simulados baseados em situações reais em Portugal.</div>
+  </div>
+  <div class="landing-body">
+    <label class="landing-label" for="inp-name">O seu nome (pode ser fictício)</label>
+    <input class="landing-input" id="inp-name" type="text" placeholder="ex: Maria Ferreira" maxlength="60" autocomplete="off">
+    <label class="landing-label" for="inp-email">O seu endereço de email (pode ser fictício)</label>
+    <input class="landing-input" id="inp-email" type="text" placeholder="ex: maria.ferreira@gmail.com" maxlength="80" autocomplete="off">
+    <div class="landing-hint">O nome e email serão inseridos nos cenários para tornar a simulação mais realista. Não são guardados nem enviados para nenhum servidor.</div>
+    <button class="start-btn" onclick="startQuiz()">Iniciar simulação →</button>
+  </div>
+</div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz-wrap" style="display:none">
+  <div class="top-bar">
+    <div class="top-logo">Phishing<span>Lab</span></div>
+    <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+    <div class="top-stat">Email <b id="cur">1</b>/10 &nbsp;|&nbsp; <b id="scr">0</b> certos</div>
+  </div>
+  <div id="quiz-screen">
+    <div class="counter-pill"><span>Email <b id="cnt-lbl">1</b> de 10</span></div>
+    <div class="email-client">
+      <div class="client-bar">
+        <div class="client-dot r"></div><div class="client-dot y"></div><div class="client-dot g"></div>
+        <div class="client-bar-label">Caixa de Entrada</div>
+      </div>
+      <div class="email-header">
+        <div class="email-subject" id="q-subject"></div>
+        <div class="email-field"><span class="email-field-lbl">De:</span><span class="email-field-val"><span class="sender-name" id="q-dname"></span><span class="sender-addr" id="q-addr"></span></span></div>
+        <div class="email-field"><span class="email-field-lbl">Para:</span><span class="email-field-val" id="q-to"></span></div>
+        <div class="email-field"><span class="email-field-lbl">Data:</span><span class="email-field-val" style="color:#9ca3af;font-size:11.5px" id="q-date"></span></div>
+      </div>
+      <div class="email-body-wrap" id="q-body"></div>
+      <div id="browser-status"></div>
+    </div>
+    <div style="font-size:12px;color:#6b7280;margin-bottom:.5rem;text-align:center">Este email é phishing ou legítimo?</div>
+    <div class="hover-hint" style="justify-content:center">🖱️ Passe o cursor sobre os botões do email para ver o link de destino (como num browser real)</div>
+    <div class="verdict-area">
+      <button class="vbtn phish" id="btn-phish" onclick="answer('phishing')">🎣 É Phishing</button>
+      <button class="vbtn real" id="btn-real" onclick="answer('real')">✅ É Legítimo</button>
+    </div>
+  </div>
+  <div id="feedback-screen" style="display:none">
+    <div class="feedback" id="fb-box">
+      <div class="feedback-top">
+        <div class="feedback-icon" id="fb-icon"></div>
+        <div class="feedback-verdict" id="fb-verdict"></div>
+      </div>
+      <div class="feedback-explain" id="fb-explain"></div>
+      <ul class="clue-list" id="fb-clues"></ul>
+    </div>
+    <button class="next-btn" id="next-btn" onclick="nextEmail()">Próximo email →</button>
+  </div>
+  <div id="final-screen" style="display:none"></div>
+</div>
+</div>
+
+<script>
+function buildScenarios(N,E){
+const FN=N.split(' ')[0]||N;
+const EM=E||'utilizador@email.com';
+return [
+{type:'phishing',displayName:'Caixa Geral de Depósitos',fromAddr:'seguranca@cgd-portugal-online.net',to:EM,subject:'[URGENTE] A sua conta CGD foi temporariamente bloqueada',date:'29 abr. 2026, 08:22',
+body:`<div class="org-banner" style="color:#e24b4a;border-color:#e24b4a">■ CGD SEGURANÇA</div><p>Prezado Cliente,</p><p>Detectámos <strong>atividade suspeita</strong> na sua conta bancária online. Por razões de segurança, o acesso foi <strong>temporariamente bloqueado</strong>.</p><p>Para reativar e evitar a perda permanente dos seus dados, deverá verificar a sua identidade <strong>nas próximas 48 horas</strong>.</p><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#e24b4a;color:#fff">Reativar conta agora</div><br><div class="email-link-shown suspicious">http://cgd-verificacao-conta.net/acesso/secure?token=xK9mP2</div></div><p>Se não reconhece esta situação, ignore este email. A não ação resultará no encerramento permanente da sua conta.</p><div class="email-footer-mini">© Caixa Geral de Depósitos — Departamento de Segurança<br>Av. João XXI, 63 — 1000-300 Lisboa</div>`,
+explanation:'Email de phishing a imitar a CGD. O banco real usa sempre "@cgd.pt" — "cgd-portugal-online.net" é um domínio falso registado por criminosos. A saudação genérica "Prezado Cliente" revela que o remetente não sabe o seu nome. A ameaça de "encerramento permanente" é pressão psicológica para o fazer agir sem pensar.',
+clues:[{cls:'bad',txt:'Domínio falso: "@cgd-portugal-online.net" — o domínio oficial da CGD é @cgd.pt'},{cls:'bad',txt:'Saudação genérica "Prezado Cliente" — o seu banco usa sempre o seu nome completo'},{cls:'bad',txt:'Urgência de 48 horas com ameaça de perda permanente — pressão psicológica clássica'},{cls:'bad',txt:'Link aponta para "cgd-verificacao-conta.net" — completamente diferente de cgd.pt'},{cls:'tip',txt:'Nunca aceda ao banco por links de email — use sempre o site oficial ou a app'}]},
+
+{type:'real',displayName:'NOS',fromAddr:'faturas@nos.pt',to:EM,subject:'A sua fatura NOS de abril de 2026 está disponível',date:'1 mai. 2026, 07:01',
+body:`<div class="org-banner" style="color:#185FA5;border-color:#185FA5">■ NOS</div><p>Olá ${N},</p><p>A sua fatura de <strong>abril de 2026</strong> já está disponível na sua área de cliente.</p><div class="info-row"><strong>Valor a pagar:</strong> 34,90 €<br><strong>Data limite:</strong> 15 de maio de 2026<br><strong>Método:</strong> Débito direto — não precisa de fazer nada</div><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#185FA5;color:#fff">Ver fatura</div><br><div class="email-link-shown safe">nos.pt/clientes/faturas</div></div><div class="email-footer-mini">NOS SGPS, S.A. · NIF 508 676 756 · Rua Actor António Silva 9, 1600-404 Lisboa</div>`,
+explanation:`Email legítimo da NOS. Domínio oficial "@nos.pt". Saudação personalizada com "${N}". Não pede dados nem cria urgência — apenas informa que a fatura está disponível e que o débito é automático. Link aponta para "nos.pt". Inclui NIF verificável.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@nos.pt" — correto e verificável'},{cls:'good',txt:`Saudação personalizada com o nome "${N}"`},{cls:'good',txt:'Débito automático — não pede qualquer ação urgente'},{cls:'good',txt:'Link aponta apenas para nos.pt — domínio oficial'},{cls:'good',txt:'NIF e morada reais verificáveis'}]},
+
+{type:'phishing',displayName:'CTT Expresso',fromAddr:'entregas@ctt-notificacoes.info',to:EM,subject:'⚠️ Encomenda retida — taxa aduaneira em dívida (2,99 €)',date:'28 abr. 2026, 14:07',
+body:`<div class="org-banner" style="color:#e24b4a;border-color:#e24b4a">■ CTT EXPRESSO</div><p>Caro cliente,</p><p>A sua encomenda (Ref. #PT-74829163) está <strong>retida nos nossos armazéns</strong> aguardando pagamento de uma taxa aduaneira de <strong>2,99 €</strong>.</p><div class="alert-box">⚠️ Tem 48 horas para efetuar o pagamento, caso contrário a encomenda será devolvida e poderá incorrer em custos adicionais.</div><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#e24b4a;color:#fff">Pagar 2,99 € agora</div><br><div class="email-link-shown suspicious">http://ctt-pagamentos-online.info/entrega/748291/pagar</div></div><div class="email-footer-mini">CTT — Correios de Portugal · Apoio: ctt@ctt.info</div>`,
+explanation:'Esquema frequente em Portugal. Os CTT reais usam "@ctt.pt" — nunca ".info". O valor pequeno (2,99€) é propositado para parecer inofensivo, mas o real perigo é fornecer os dados do cartão num site falso. Até o email de apoio ao cliente usa um domínio falso ("ctt.info").',
+clues:[{cls:'bad',txt:'Domínio falso: "@ctt-notificacoes.info" — o domínio oficial dos CTT é @ctt.pt'},{cls:'bad',txt:'Extensão ".info" é sinal de alerta — serviços oficiais usam .pt'},{cls:'bad',txt:'Valor pequeno (2,99€) deliberado para parecer inofensivo'},{cls:'bad',txt:'Link de pagamento aponta para "ctt-pagamentos-online.info" — domínio falso'},{cls:'tip',txt:'Se tiver encomendas, consulte sempre o estado em ctt.pt com o código de rastreio'}]},
+
+{type:'real',displayName:'LinkedIn',fromAddr:'messages-noreply@linkedin.com',to:EM,subject:'Ana Ferreira quer criar ligação consigo no LinkedIn',date:'30 abr. 2026, 10:22',
+body:`<div class="org-banner" style="color:#0a66c2;border-color:#0a66c2">in LinkedIn</div><p>Olá ${FN},</p><p><strong>Ana Ferreira</strong>, Professora no Agrupamento de Escolas de Setúbal, quer criar ligação consigo.</p><p style="font-size:12px;color:#6b7280;font-style:italic;padding:.5rem;background:#f8f9fb;border-radius:6px">"Olá, conhecemo-nos na formação da semana passada. Gostei muito da sessão!"</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#0a66c2;color:#fff">Ver perfil de Ana Ferreira</div><br><div class="email-link-shown safe">linkedin.com/in/ana-ferreira-setubal</div></div><p style="font-size:12px;color:#6b7280">Pode aceitar ou ignorar este convite.</p><div class="email-footer-mini">LinkedIn Ireland Unlimited Company · Wilton Plaza, Dublin 2<br>Email enviado para ${EM}</div>`,
+explanation:'Email legítimo do LinkedIn. Domínio oficial "@linkedin.com". Não pede palavras-passe, dados bancários ou informações sensíveis. Ação simples e esperada de uma rede social. O link aponta para linkedin.com. Dá opção de ignorar o convite — emails de phishing raramente oferecem alternativas.',
+clues:[{cls:'good',txt:'Domínio oficial: "@linkedin.com" — correto e verificável'},{cls:'good',txt:'Não pede dados pessoais, palavras-passe ou pagamentos'},{cls:'good',txt:'Ação típica de rede social — pedido de ligação de contacto'},{cls:'good',txt:'Link aponta exclusivamente para linkedin.com'},{cls:'good',txt:'Oferece opção clara de ignorar — sinal de email legítimo'}]},
+
+{type:'phishing',displayName:'Portal das Finanças — AT',fromAddr:'reembolso@portal-at-financas.com',to:EM,subject:'Tem um reembolso de IRS no valor de 312,47 € disponível',date:'27 abr. 2026, 11:33',
+body:`<div class="org-banner" style="color:#374151;border-color:#374151">■ AUTORIDADE TRIBUTÁRIA E ADUANEIRA</div><p>Exmo. Sr./Sra. Contribuinte,</p><p>Na sequência do processamento da sua declaração de IRS, verificou-se que tem um <strong>reembolso no valor de 312,47 €</strong> disponível para levantamento.</p><p>Para receber o reembolso, deverá confirmar os seus dados bancários (IBAN):</p><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#185FA5;color:#fff">Confirmar dados bancários</div><br><div class="email-link-shown suspicious">http://financas-reembolso-irs.com/validar-iban?ref=IRS2025</div></div><p>O prazo para levantamento expira em <strong>72 horas</strong>. Após este prazo, o valor será redirecionado para o Estado.</p><div class="email-footer-mini">Autoridade Tributária e Aduaneira — Ministério das Finanças<br>Rua da Alfândega 5 — 1149-006 Lisboa</div>`,
+explanation:'Phishing a imitar a Autoridade Tributária. O portal oficial é "portaldasfinancas.gov.pt" — nunca um ".com". A AT nunca pede confirmação de IBAN por email; os reembolsos são depositados automaticamente. O prazo de "72 horas" é falso e serve para criar pressão.',
+clues:[{cls:'bad',txt:'Domínio falso: "@portal-at-financas.com" — o portal oficial é portaldasfinancas.gov.pt'},{cls:'bad',txt:'Serviços do Estado usam sempre ".gov.pt" — nunca .com, .net ou .info'},{cls:'bad',txt:'A AT nunca pede confirmação de IBAN por email — os reembolsos são automáticos'},{cls:'bad',txt:'Link aponta para "financas-reembolso-irs.com" — domínio completamente diferente do oficial'},{cls:'bad',txt:'Prazo de 72 horas falso — o Estado não cancela reembolsos por falta de confirmação por email'}]},
+
+{type:'real',displayName:'FNAC Portugal',fromAddr:'confirmacoes@fnac.pt',to:EM,subject:'Confirmação da sua encomenda FNAC #FN-2026-294857',date:'27 abr. 2026, 16:44',
+body:`<div class="org-banner" style="color:#e4a523;border-color:#e4a523">■ FNAC</div><p>Olá ${N},</p><p>A sua encomenda foi confirmada! Obrigado pela sua compra.</p><div class="info-row"><strong>Encomenda #FN-2026-294857</strong><br>📖 Inteligência Artificial — Uma Abordagem Moderna × 1 ........ <strong>32,90 €</strong><br>📦 Envio standard (3-5 dias úteis) ........ <strong>Gratuito</strong><br><strong>Total pago:</strong> 32,90 €</div><p>Irá receber um segundo email quando a encomenda for enviada, com o número de rastreio.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#185FA5;color:#fff">Acompanhar encomenda</div><br><div class="email-link-shown safe">fnac.pt/conta/encomendas/FN-2026-294857</div></div><div class="email-footer-mini">FNAC PORTUGAL, LDA · NIF 502 625 126 · Rua dos Fanqueiros 133, 1100-228 Lisboa<br>Apoio: apoio@fnac.pt | 213 221 030</div>`,
+explanation:`Email legítimo da FNAC. Domínio "@fnac.pt" oficial. Confirma uma compra com detalhes específicos que apenas o sistema real conhece (número de encomenda, produto, valor). Não pede dados adicionais. Inclui NIF e contacto de apoio verificáveis.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@fnac.pt" — correto e verificável'},{cls:'good',txt:'Confirma ação iniciada pelo utilizador com referência única'},{cls:'good',txt:'Produto, quantidade e valor específicos — só o sistema real sabe isto'},{cls:'good',txt:'Não pede dados adicionais — apenas informa sobre a compra'},{cls:'good',txt:'NIF, telefone e email de apoio verificáveis'}]},
+
+{type:'phishing',displayName:'Equipa Microsoft',fromAddr:'suporte@microsoft-seguranca365.com',to:EM,subject:'⚠️ A sua conta Microsoft 365 será suspensa em 24 horas',date:'29 abr. 2026, 03:47',
+body:`<div class="org-banner" style="color:#0078d4;border-color:#0078d4">■ MICROSOFT 365</div><p>Caro utilizador,</p><p>A sua licença do <strong>Microsoft 365</strong> expirou e a sua conta será <strong>permanentemente suspensa em 24 horas</strong>.</p><div class="alert-box">⚠️ Após suspensão, perderá acesso a todos os emails, documentos OneDrive e dados do Teams. Esta ação é irreversível.</div><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#0078d4;color:#fff">Renovar agora — Manter os meus dados</div><br><div class="email-link-shown suspicious">http://microsoft365-renovacao-pt.com/renovar?id=xK9mP2zQ</div></div><div class="email-footer-mini">Microsoft Corporation · One Microsoft Way, Redmond, WA 98052, USA</div>`,
+explanation:'Phishing a imitar a Microsoft. O domínio real é "@microsoft.com" — nunca "microsoft-seguranca365.com". Note a hora de envio: 03:47 da manhã, hora a que sistemas legítimos raramente enviam alertas. A ameaça de perda "irreversível" é uma tática de pânico. A Microsoft nunca apaga dados imediatamente.',
+clues:[{cls:'bad',txt:'Domínio falso: "@microsoft-seguranca365.com" — emails da Microsoft vêm de @microsoft.com'},{cls:'bad',txt:'Hora suspeita: 03:47 da manhã — sistemas legítimos raramente enviam alertas a esta hora'},{cls:'bad',txt:'Ameaça de perda "irreversível" — tática de pânico para impedir que pense'},{cls:'bad',txt:'Link aponta para "microsoft365-renovacao-pt.com" — domínio falso'},{cls:'tip',txt:'Gerencie subscrições Microsoft em account.microsoft.com — nunca por links de email'}]},
+
+{type:'real',displayName:'Segurança Social',fromAddr:'noreply@seg-social.pt',to:EM,subject:'Extrato de carreira contributiva — 1.º trimestre 2026 disponível',date:'1 mai. 2026, 06:30',
+body:`<div class="org-banner" style="color:#374151;border-color:#374151">■ SEGURANÇA SOCIAL</div><p>Exmo./Exma. Sr./Sra. ${N},</p><p>O seu <strong>extrato de carreira contributiva</strong> referente ao <strong>1.º trimestre de 2026</strong> já se encontra disponível na Segurança Social Direta.</p><p>Para consultar o extrato, aceda com o seu NIF e senha, ou através de Chave Móvel Digital.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#1a5276;color:#fff">Aceder à Segurança Social Direta</div><br><div class="email-link-shown safe">seg-social.pt/directa</div></div><p>Dúvidas? Contacte: <strong>300 502 502</strong> (dias úteis, 9h-18h).</p><div class="email-footer-mini">Instituto da Segurança Social, I.P. · NIF 507 004 182 · Rua Rosa Araújo 43, 1250-194 Lisboa<br>Email gerado automaticamente — por favor não responda.</div>`,
+explanation:`Email legítimo do Instituto da Segurança Social. Domínio "@seg-social.pt" oficial. Nome "${N}" correto na saudação. Não pede dados pessoais por email — direciona para login no portal. Notificação trimestral de rotina, sem urgência. Inclui número de telefone oficial verificável.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@seg-social.pt" — pertencente ao Instituto da Segurança Social'},{cls:'good',txt:`Nome correto na saudação: "${N}"`},{cls:'good',txt:'Não pede dados — direciona para login no portal com credenciais habituais'},{cls:'good',txt:'Notificação de rotina trimestral — sem urgência artificial'},{cls:'good',txt:'Número de telefone oficial (300 502 502) verificável'}]},
+
+{type:'phishing',displayName:'BPI — Alerta de Segurança',fromAddr:'alertas@bpi-online-seguranca.pt',to:EM,subject:'Acesso não autorizado detetado — conta BPI temporariamente limitada',date:'28 abr. 2026, 19:51',
+body:`<div class="org-banner" style="color:#e24b4a;border-color:#e24b4a">■ BPI BANCO</div><p>Prezado Cliente,</p><p>O nosso sistema detetou um <strong>acesso não autorizado</strong> à sua conta BPI Net a partir de um dispositivo desconhecido localizado em <em>Bucareste, Roménia</em>.</p><div class="alert-box">🔒 A sua conta permanecerá limitada até à verificação de identidade. Transferências e pagamentos estão suspensos.</div><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#e24b4a;color:#fff">Verificar identidade agora</div><br><div class="email-link-shown suspicious">http://bpi-verificacao-identidade.net/secure/login?sess=A7xQ</div></div><p>Se não reconhece esta atividade, é ainda mais urgente que complete a verificação imediatamente.</p><div class="email-footer-mini">BPI — Banco BPI, S.A. · Rua Tenente Valadim, 284 · 4100-476 Porto</div>`,
+explanation:'Phishing sofisticado a imitar o BPI. O domínio real é "@bpi.pt" — "bpi-online-seguranca.pt" é falso. A menção de Bucareste é intencional para criar alarme. A frase "é ainda mais urgente se não reconhece" é uma armadilha para quem fica confuso. Em caso de suspeita real, ligue para o número no verso do cartão.',
+clues:[{cls:'bad',txt:'Domínio falso: "@bpi-online-seguranca.pt" — o domínio oficial do BPI é @bpi.pt'},{cls:'bad',txt:'Saudação genérica "Prezado Cliente" — o banco usa sempre o seu nome'},{cls:'bad',txt:'Localização (Bucareste) inventada para criar medo e urgência'},{cls:'bad',txt:'Link aponta para "bpi-verificacao-identidade.net" — domínio completamente diferente'},{cls:'bad',txt:'"É ainda mais urgente se não reconhece" — armadilha para quem está assustado e confuso'},{cls:'tip',txt:'Em caso de suspeita, ligue para o número no verso do cartão — nunca use links de email'}]},
+
+{type:'real',displayName:'MB WAY',fromAddr:'noreply@mbway.pt',to:EM,subject:'Transferência MB WAY enviada com sucesso — 35,00 €',date:'28 abr. 2026, 20:14',
+body:`<div class="org-banner" style="color:#e4007c;border-color:#e4007c">■ MB WAY</div><p>Olá ${FN},</p><p>A sua transferência foi processada com sucesso.</p><div class="info-row"><strong>Valor enviado:</strong> 35,00 €<br><strong>Para:</strong> João Pereira (+351 9** *** 312)<br><strong>Data e hora:</strong> 28/04/2026 às 20:13<br><strong>Referência:</strong> MBW-2026-04-748291<br><strong>Estado:</strong> ✓ Concluída</div><p style="font-size:12.5px">Se não reconhece esta transferência, contacte de imediato: <strong>210 912 700</strong>.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#e4007c;color:#fff">Ver detalhes na app</div><br><div class="email-link-shown safe">mbway.pt/transacoes</div></div><div class="email-footer-mini">SIBS — Sociedade Interbancária de Serviços, S.A. · NIF 500 409 260 · Rua do Ouro 49, 1100-150 Lisboa</div>`,
+explanation:'Email legítimo da SIBS/MB WAY. Domínio "@mbway.pt" oficial. Confirma transação iniciada pelo utilizador com referência única, valor e destinatário. Não pede dados adicionais. Fornece número de telefone real para reportar problemas.',
+clues:[{cls:'good',txt:'Domínio oficial: "@mbway.pt" — pertencente à SIBS'},{cls:'good',txt:'Confirma ação iniciada pelo utilizador — notificação transacional esperada'},{cls:'good',txt:'Referência única com data/hora — dados que apenas o sistema real conhece'},{cls:'good',txt:'Não pede dados adicionais — apenas informa sobre a transferência'},{cls:'good',txt:'Número oficial verificável (210 912 700) para reportar problemas'}]},
+
+{type:'phishing',displayName:'EDP — Serviço de Energia',fromAddr:'avisos@edp-faturacao-online.com',to:EM,subject:'⚡ Aviso final: fatura EDP em dívida — corte de energia em 24h',date:'28 abr. 2026, 09:15',
+body:`<div class="org-banner" style="color:#e24b4a;border-color:#e24b4a">■ EDP ENERGIA</div><p>Exmo./Exma. Sr./Sra.,</p><p>A sua fatura de energia no valor de <strong>87,34 €</strong> continua por liquidar após o prazo de vencimento.</p><div class="alert-box">⚡ Caso não proceda ao pagamento <strong>nas próximas 24 horas</strong>, o seu fornecimento de energia será interrompido sem aviso adicional.</div><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#e24b4a;color:#fff">Pagar fatura agora — 87,34 €</div><br><div class="email-link-shown suspicious">http://edp-pagamento-fatura.net/regularizar?id=EDP7291</div></div><p style="font-size:12px;color:#6b7280">Após o pagamento, envie o comprovativo para recuperar@edp-online.com para evitar a interrupção.</p><div class="email-footer-mini">EDP — Energias de Portugal · Av. 24 de Julho 12, 1249-300 Lisboa</div>`,
+explanation:'Phishing a imitar a EDP. O domínio real é "@edp.pt" — "edp-faturacao-online.com" é falso. A ameaça de corte de energia em 24 horas é uma tática de pressão extrema. Note também que pede para enviar comprovativo para outro endereço suspeito. A EDP real envia sempre avisos por carta e nunca corta sem aviso prévio legal.',
+clues:[{cls:'bad',txt:'Domínio falso: "@edp-faturacao-online.com" — o domínio oficial da EDP é @edp.pt'},{cls:'bad',txt:'Ameaça de corte em 24 horas — tática de pânico extremamente eficaz'},{cls:'bad',txt:'Link aponta para "edp-pagamento-fatura.net" — domínio completamente diferente do oficial'},{cls:'bad',txt:'Pede comprovativo para "recuperar@edp-online.com" — outro domínio falso'},{cls:'tip',txt:'A EDP real envia avisos de corte por carta registada — nunca apenas por email com prazo de 24h'}]},
+
+{type:'real',displayName:'Continente Online',fromAddr:'encomendas@continente.pt',to:EM,subject:'Encomenda #CON-2026-183749 confirmada — entrega amanhã',date:'30 abr. 2026, 14:22',
+body:`<div class="org-banner" style="color:#059669;border-color:#059669">■ CONTINENTE ONLINE</div><p>Olá ${N},</p><p>A sua encomenda foi confirmada e estará pronta para entrega <strong>amanhã, 1 de maio</strong>, entre as 9h e as 13h.</p><div class="info-row"><strong>Encomenda #CON-2026-183749</strong><br>🛒 Compras de supermercado (23 artigos) ........ <strong>67,80 €</strong><br>🚚 Taxa de entrega ao domicílio ........ <strong>3,99 €</strong><br><strong>Total cobrado:</strong> 71,79 €</div><p>O estafeta irá contactá-lo/a pelo telefone registado na conta antes da entrega.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#059669;color:#fff">Ver detalhes da encomenda</div><br><div class="email-link-shown safe">continente.pt/conta/encomendas/CON-2026-183749</div></div><div class="email-footer-mini">Sonae MC, S.A. · NIF 502 054 629 · Lugar do Espido, Via Norte, 4471-909 Maia<br>Apoio: 707 200 220</div>`,
+explanation:`Email legítimo do Continente Online. Domínio "@continente.pt" oficial. Confirma uma compra com detalhes específicos (referência, artigos, valores). Não pede dados adicionais. Link aponta para continente.pt. NIF da Sonae MC e contactos reais verificáveis.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@continente.pt" — correto e verificável'},{cls:'good',txt:`Saudação personalizada com o nome "${N}"`},{cls:'good',txt:'Confirma ação iniciada pelo utilizador com referência, data e valor exatos'},{cls:'good',txt:'Link aponta exclusivamente para continente.pt'},{cls:'good',txt:'NIF da Sonae MC e contactos reais verificáveis'}]},
+
+{type:'phishing',displayName:'SNS — Saúde',fromAddr:'marcacoes@sns-portal-saude.net',to:EM,subject:'⚕️ Confirmação de dados necessária para a sua consulta SNS',date:'26 abr. 2026, 16:09',
+body:`<div class="org-banner" style="color:#1d6fa4;border-color:#1d6fa4">■ SNS — SERVIÇO NACIONAL DE SAÚDE</div><p>Exmo./Exma. Sr./Sra. ${N},</p><p>A sua marcação de consulta está pendente de <strong>confirmação de dados</strong>. Para garantir a realização da consulta, deverá validar as suas informações de saúde e dados pessoais.</p><div class="alert-box">⚕️ A não confirmação nos próximos 2 dias resultará no cancelamento automático da consulta e possível aplicação de taxa de falta.</div><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#1d6fa4;color:#fff">Confirmar dados de saúde</div><br><div class="email-link-shown suspicious">http://sns-portal-saude.net/doente/confirmar?utente=PT48291</div></div><div class="email-footer-mini">SNS — Serviço Nacional de Saúde · Av. João Crisóstomo 9, 1049-062 Lisboa</div>`,
+explanation:'Phishing a imitar o SNS. O portal oficial é "sns.gov.pt" — nunca "sns-portal-saude.net". Serviços do Estado usam sempre ".gov.pt". O SNS nunca pede confirmação de dados de saúde por email. Esta tentativa visa recolher dados pessoais e de saúde — informação particularmente sensível.',
+clues:[{cls:'bad',txt:'Domínio falso: "@sns-portal-saude.net" — o portal oficial é sns.gov.pt (.gov.pt)'},{cls:'bad',txt:'Extensão ".net" em vez de ".gov.pt" — serviços de saúde pública usam sempre .gov.pt'},{cls:'bad',txt:'O SNS nunca pede confirmação de dados de saúde por email'},{cls:'bad',txt:'Ameaça de "taxa de falta" por não confirmação por email — pressão falsa'},{cls:'tip',txt:'Aceda sempre ao SNS24 (808 24 24 24) ou a sns.gov.pt para questões de saúde'}]},
+
+{type:'real',displayName:'EDP',fromAddr:'faturas@edp.pt',to:EM,subject:'A sua fatura EDP de abril já está disponível',date:'2 mai. 2026, 07:00',
+body:`<div class="org-banner" style="color:#d32f2f;border-color:#d32f2f">■ EDP</div><p>Olá ${N},</p><p>A sua fatura de eletricidade referente a <strong>abril de 2026</strong> já está disponível na área de cliente EDP Online.</p><div class="info-row"><strong>Fatura de abril 2026</strong><br>⚡ Eletricidade: 52,18 €<br>🔥 Gás: 31,45 €<br><strong>Total a débito:</strong> 83,63 €<br><strong>Data de débito:</strong> 15 de maio de 2026</div><p>O valor será debitado automaticamente. Não é necessária qualquer ação da sua parte.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#d32f2f;color:#fff">Consultar fatura detalhada</div><br><div class="email-link-shown safe">edp.pt/clientes/area-cliente/faturas</div></div><div class="email-footer-mini">EDP — Energias de Portugal, S.A. · NIF 500 697 256 · Av. 24 de Julho 12, 1249-300 Lisboa<br>Linha gratuita: 800 505 505</div>`,
+explanation:`Email legítimo da EDP. Domínio "@edp.pt" oficial — sem hífens nem extensões suspeitas. Saudação personalizada com "${N}". Débito automático, não pede ação. Link aponta apenas para edp.pt. NIF real e linha gratuita verificável.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@edp.pt" — correto, sem hífens nem extensões suspeitas'},{cls:'good',txt:`Saudação personalizada com o nome "${N}"`},{cls:'good',txt:'Débito automático — não pede qualquer ação nem pagamento por link'},{cls:'good',txt:'Link aponta apenas para edp.pt — domínio oficial'},{cls:'good',txt:'NIF real (500 697 256) e linha gratuita verificável (800 505 505)'}]},
+
+{type:'phishing',displayName:'WhatsApp Security',fromAddr:'security@whatsapp-account-alert.com',to:EM,subject:'A sua conta WhatsApp está a ser transferida para outro dispositivo',date:'27 abr. 2026, 22:03',
+body:`<div class="org-banner" style="color:#128c7e;border-color:#128c7e">■ WHATSAPP</div><p>Olá,</p><p>Detetámos uma tentativa de <strong>transferência da sua conta WhatsApp</strong> para um novo dispositivo (Samsung Galaxy A55) a partir de Lisboa.</p><div class="alert-box">⚠️ Se não agir nos próximos 30 minutos, a transferência será concluída e perderá acesso à sua conta e histórico de mensagens.</div><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#128c7e;color:#fff">Cancelar transferência agora</div><br><div class="email-link-shown suspicious">http://whatsapp-account-alert.com/cancel-transfer?id=WA482910</div></div><div class="email-footer-mini">WhatsApp LLC · 1601 Willow Road, Menlo Park, CA 94025, USA</div>`,
+explanation:'Phishing a imitar o WhatsApp. O domínio real é "@whatsapp.com" — "whatsapp-account-alert.com" é completamente falso. O prazo de "30 minutos" é extremamente agressivo e visa impedir qualquer reflexão. O WhatsApp nunca envia alertas de segurança por email sobre "transferências de conta" — a gestão é feita exclusivamente na aplicação.',
+clues:[{cls:'bad',txt:'Domínio falso: "@whatsapp-account-alert.com" — emails legítimos vêm de @whatsapp.com'},{cls:'bad',txt:'Prazo de 30 minutos — urgência extrema para impedir qualquer verificação'},{cls:'bad',txt:'O WhatsApp não envia alertas de segurança por email — a gestão é feita na app'},{cls:'bad',txt:'Link aponta para "whatsapp-account-alert.com" — domínio falso'},{cls:'tip',txt:'Verifique a sua conta WhatsApp diretamente na app em Definições > Conta'}]},
+
+{type:'real',displayName:'Google',fromAddr:'no-reply@accounts.google.com',to:EM,subject:'Novo acesso à sua Conta Google — verifique se foi você',date:'29 abr. 2026, 18:47',
+body:`<div class="org-banner" style="color:#4285f4;border-color:#4285f4">■ GOOGLE</div><p>Olá ${FN},</p><p>A sua Conta Google (${EM}) foi acedida a partir de um <strong>novo dispositivo</strong>.</p><div class="info-row">📱 <strong>Dispositivo:</strong> Chrome no Windows 11<br>📍 <strong>Localização estimada:</strong> Lisboa, Portugal<br>🕐 <strong>Hora:</strong> 29/04/2026 às 18:45</div><p>Se foi você, não precisa de fazer nada. Se não reconhece este acesso, pode proteger a sua conta.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#4285f4;color:#fff">Verificar atividade</div><br><div class="email-link-shown safe">myaccount.google.com/notifications</div></div><div class="email-footer-mini">Google LLC · 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA</div>`,
+explanation:`Email legítimo do Google. Domínio "@accounts.google.com" oficial para notificações de segurança. Personalizado com o email "${EM}". Sem urgência: "se foi você, não precisa de fazer nada". Link aponta para myaccount.google.com. Localização coerente (Lisboa) — não uma localização estranha.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@accounts.google.com" — subdomínio legítimo para alertas de segurança'},{cls:'good',txt:`Email personalizado com o endereço "${EM}"`},{cls:'good',txt:'Sem urgência — "se foi você, não precisa de fazer nada"'},{cls:'good',txt:'Link aponta para myaccount.google.com — domínio oficial do Google'},{cls:'good',txt:'Localização coerente (Lisboa, Portugal) — não uma localização estranha'}]},
+
+{type:'phishing',displayName:'PayPal',fromAddr:'servico@paypal-seguranca.net',to:EM,subject:'Pagamento de 249,99 € foi iniciado — confirme ou cancele em 15 min',date:'30 abr. 2026, 11:44',
+body:`<div class="org-banner" style="color:#003087;border-color:#003087">■ PAYPAL</div><p>Olá,</p><p>Um pagamento de <strong>249,99 €</strong> foi iniciado a partir da sua conta PayPal para <em>ElectronicsShop24</em>.</p><div class="info-row">💳 <strong>Valor:</strong> 249,99 €<br>🛍️ <strong>Destinatário:</strong> ElectronicsShop24<br>🌍 <strong>IP de origem:</strong> 185.234.xx.xx (estrangeiro)</div><div class="alert-box">⚠️ Tem apenas <strong>15 minutos</strong> para cancelar. Após este período, o pagamento não poderá ser revertido.</div><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#e24b4a;color:#fff">Cancelar pagamento agora</div><br><div class="email-link-shown suspicious">http://paypal-seguranca.net/cancelar-pagamento?txn=PP482910</div></div><div class="email-footer-mini">PayPal Holdings, Inc. · 2211 North First Street, San Jose, CA 95131, USA</div>`,
+explanation:'Phishing a imitar o PayPal. O domínio real é "@paypal.com" — "paypal-seguranca.net" é falso. O valor elevado (249,99€) e o prazo de 15 minutos visam provocar pânico. Ao clicar em "cancelar", a vítima vai para um site falso que rouba as credenciais da conta PayPal real.',
+clues:[{cls:'bad',txt:'Domínio falso: "@paypal-seguranca.net" — emails reais do PayPal vêm de @paypal.com'},{cls:'bad',txt:'Prazo de 15 minutos — urgência extrema para provocar pânico'},{cls:'bad',txt:'IP "estrangeiro" vago — informação criada para criar alarme sem ser verificável'},{cls:'bad',txt:'Link aponta para "paypal-seguranca.net" — domínio falso que rouba credenciais'},{cls:'tip',txt:'Verifique pagamentos diretamente em paypal.com — nunca através de links de email de alerta'}]},
+
+{type:'real',displayName:'MEO',fromAddr:'faturas@meo.pt',to:EM,subject:'Fatura MEO de abril de 2026 — 48,99 €',date:'1 mai. 2026, 08:00',
+body:`<div class="org-banner" style="color:#ff6600;border-color:#ff6600">■ MEO</div><p>Olá ${N},</p><p>A sua fatura MEO de <strong>abril de 2026</strong> já está disponível.</p><div class="info-row"><strong>Resumo da fatura</strong><br>📡 Internet + TV + Telefone ........ <strong>48,99 €</strong><br><strong>Data de débito:</strong> 10 de maio de 2026<br><strong>Forma de pagamento:</strong> Débito direto — IBAN terminado em …4821</div><p>Não precisa de efetuar qualquer pagamento — o débito é automático.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#ff6600;color:#fff">Ver fatura completa</div><br><div class="email-link-shown safe">meo.pt/cliente/faturas</div></div><div class="email-footer-mini">Altice Portugal, S.A. · NIF 500 005 157 · Rua Actor Taborda 65, 1069-013 Lisboa<br>Linha de apoio MEO: 16 200 (gratuita para clientes)</div>`,
+explanation:`Email legítimo da MEO. Domínio "@meo.pt" oficial. Saudação personalizada com "${N}". Mostra os últimos 4 dígitos do IBAN — informação que apenas o sistema real conhece. Débito automático, não pede ação. NIF real da Altice Portugal e linha de apoio verificável.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@meo.pt" — pertencente à Altice Portugal'},{cls:'good',txt:`Saudação personalizada com o nome "${N}"`},{cls:'good',txt:'Últimos 4 dígitos do IBAN (…4821) — informação que apenas o sistema real conhece'},{cls:'good',txt:'Débito automático — não pede qualquer ação nem pagamento por link'},{cls:'good',txt:'NIF real da Altice Portugal (500 005 157) e linha de apoio verificável'}]},
+
+{type:'phishing',displayName:'Banco Santander',fromAddr:'seguranca@santandertotta-online.com',to:EM,subject:'🔴 O seu cartão Santander foi bloqueado — desbloqueie agora',date:'26 abr. 2026, 13:28',
+body:`<div class="org-banner" style="color:#e24b4a;border-color:#e24b4a">■ SANTANDER</div><p>Prezado/a Cliente,</p><p>O seu cartão Santander foi <strong>temporariamente bloqueado</strong> devido a uma transação suspeita de <strong>1.247,00 €</strong> detetada hoje.</p><div class="alert-box">🔴 O seu cartão permanecerá bloqueado até que confirme ou rejeite esta transação. Não poderá efetuar compras ou levantamentos.</div><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#e24b4a;color:#fff">Desbloquear cartão agora</div><br><div class="email-link-shown suspicious">http://santandertotta-online.com/seguranca/desbloquear?card=XXXX4521</div></div><p style="font-size:12px;color:#6b7280">Se não confirmar nas próximas 2 horas, o bloqueio será permanente e terá de se deslocar a uma sucursal.</p><div class="email-footer-mini">Banco Santander Totta, S.A. · Rua do Ouro 88, 1100-063 Lisboa</div>`,
+explanation:'Phishing a imitar o Santander Totta. O domínio real é "@santander.pt" — "santandertotta-online.com" é falso. O valor elevado (1.247€) e a ameaça de bloqueio permanente em 2 horas são táticas de pressão. A ameaça de "ir à sucursal" tenta parecer mais real. O banco real contacta por telefone para transações suspeitas.',
+clues:[{cls:'bad',txt:'Domínio falso: "@santandertotta-online.com" — o domínio oficial é @santander.pt'},{cls:'bad',txt:'Saudação genérica "Prezado/a Cliente" — o banco usa sempre o seu nome'},{cls:'bad',txt:'Valor específico (1.247€) para criar pânico — tática de engenharia social'},{cls:'bad',txt:'Ameaça de bloqueio permanente em 2 horas — pressão psicológica extrema e falsa'},{cls:'tip',txt:'O seu banco contacta por telefone para transações suspeitas — nunca pedem confirmação só por email'}]},
+
+{type:'real',displayName:'Worten',fromAddr:'confirmacoes@worten.pt',to:EM,subject:'A sua encomenda Worten #WOR-826453 foi confirmada',date:'29 abr. 2026, 15:33',
+body:`<div class="org-banner" style="color:#e30613;border-color:#e30613">■ WORTEN</div><p>Olá ${N},</p><p>A sua encomenda foi confirmada com sucesso! Obrigado por comprar na Worten.</p><div class="info-row"><strong>Encomenda #WOR-826453</strong><br>🎧 Auriculares Sony WH-1000XM5 (Preto) × 1 ........ <strong>279,00 €</strong><br>📦 Entrega ao domicílio (1-2 dias úteis) ........ <strong>Gratuita</strong><br><strong>Total pago:</strong> 279,00 €<br><strong>Pagamento:</strong> Cartão terminado em …7234</div><p>Irá receber uma notificação quando a encomenda for entregue à transportadora.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#e30613;color:#fff">Acompanhar encomenda</div><br><div class="email-link-shown safe">worten.pt/conta/encomendas/WOR-826453</div></div><div class="email-footer-mini">Worten Equipamentos para o Lar, S.A. · NIF 506 277 956 · Rua Quinta do Pinheiro 5, 2794-527 Carnaxide<br>Apoio ao cliente: 707 103 355</div>`,
+explanation:`Email legítimo da Worten. Domínio "@worten.pt" oficial. Confirma compra com produto, valor e últimos 4 dígitos do cartão (…7234) — informação que apenas o sistema real conhece. Não pede dados adicionais. NIF real e linha de apoio verificável.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@worten.pt" — correto e verificável'},{cls:'good',txt:`Saudação personalizada com o nome "${N}"`},{cls:'good',txt:'Últimos 4 dígitos do cartão (…7234) — informação que apenas o sistema real conhece'},{cls:'good',txt:'Confirma compra com referência, produto e valor exatos'},{cls:'good',txt:'NIF real da Worten (506 277 956) e linha de apoio verificável'}]},
+
+/* ── ENGENHARIA SOCIAL 1: BEC — email do "diretor" a pedir transferência ── */
+{type:'phishing',displayName:'Manuel Rodrigues — Diretor Geral',fromAddr:'m.rodrigues@agrupamento-escolas-pt.com',to:EM,subject:'Pedido urgente — transferência bancária confidencial',date:'29 abr. 2026, 08:03',
+body:`<div class="org-banner" style="color:#374151;border-color:#374151">■ DIREÇÃO</div><p>Bom dia ${FN},</p><p>Preciso urgentemente da sua ajuda. Estou reunido com o Ministério da Educação e não posso atender o telefone.</p><p>Precisamos de efectuar uma transferência bancária de <strong>2.400 €</strong> ainda hoje para um fornecedor de material informático — a entrega está condicionada ao pagamento até às 13h. É uma situação excecional.</p><p>Por favor, trate disto discretamente — não mencione a mais ninguém por agora, pois ainda está em negociação. Envie-me os dados de confirmação por resposta a este email quando estiver feito.</p><p>Conto consigo.</p><p style="margin-top:.5rem">Manuel Rodrigues<br><span style="font-size:12px;color:#6b7280">Diretor Geral — Agrupamento de Escolas</span></p>`,
+explanation:`⚠️ ENGENHARIA SOCIAL — Técnica BEC (Business Email Compromise). Este é um dos esquemas mais eficazes e perigosos. O atacante imita uma figura de autoridade (diretor, chefe) para criar pressão hierárquica. Note os elementos clássicos desta técnica: (1) urgência extrema com prazo concreto; (2) pedido de sigilo ("não mencione a mais ninguém") para isolar a vítima; (3) impossibilidade de contacto direto ("não posso atender o telefone"); (4) pedido de ação financeira incomum. O domínio "agrupamento-escolas-pt.com" é falso — imita um endereço oficial mas não é. Antes de qualquer transferência, confirme sempre por telefone com a pessoa diretamente.`,
+clues:[{cls:'bad',txt:'Domínio falso: "@agrupamento-escolas-pt.com" — imita um endereço oficial mas não é'},{cls:'bad',txt:'🧠 Engenharia Social: usa autoridade hierárquica ("diretor") para criar pressão de obediência'},{cls:'bad',txt:'Pedido de sigilo explícito — isola a vítima para que não consulte colegas ou superiores'},{cls:'bad',txt:'Impossibilidade de contacto direto — impede verificação imediata por telefone'},{cls:'bad',txt:'Urgência com prazo concreto (13h) — técnica de pressão temporal clássica'},{cls:'tip',txt:'Regra de ouro: qualquer pedido financeiro urgente por email deve ser sempre confirmado por telefone com a pessoa diretamente'}]},
+
+/* ── ENGENHARIA SOCIAL 2: Falso prémio — iPhone ganhou ── */
+{type:'phishing',displayName:'MEO — Programa de Fidelização',fromAddr:'premios@meo-fidelizacao-clientes.com',to:EM,subject:'🎉 Parabéns! Foi selecionado/a para receber um iPhone 16 Pro',date:'27 abr. 2026, 10:14',
+body:`<div class="org-banner" style="color:#ff6600;border-color:#ff6600">■ MEO PRÉMIOS</div><p>Caro/a cliente MEO,</p><p>Tem sido um cliente fiel durante mais de 3 anos e foi <strong>selecionado/a aleatoriamente</strong> para receber um <strong>iPhone 16 Pro (256GB)</strong> no âmbito do nosso Programa de Reconhecimento de Clientes 2026.</p><p>Para reclamar o seu prémio, basta preencher os seus dados e pagar apenas os <strong>custos de envio (4,99 €)</strong>. O prémio será enviado no prazo de 5 a 7 dias úteis.</p><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#ff6600;color:#fff">Reclamar o meu prémio agora</div><br><div class="email-link-shown suspicious">http://meo-premios-clientes2026.com/reclamar?id=MC74829</div></div><div class="alert-box">⏰ Esta oferta expira em 24 horas. Apenas 1 prémio por cliente.</div><div class="email-footer-mini">MEO Prémios · Programa de Fidelização 2026</div>`,
+explanation:`⚠️ ENGENHARIA SOCIAL — Técnica de Isco (Baiting) combinada com Reciprocidade. O atacante oferece algo de grande valor (iPhone 16 Pro) para criar entusiasmo e baixar a guarda da vítima. O valor de "4,99 €" de envio é propositado — parece ridiculamente pequeno face ao "prémio", tornando a oferta irresistível. Mas o objetivo real é roubar os dados do cartão. O domínio "@meo-fidelizacao-clientes.com" é falso — a MEO usa "@meo.pt". A urgência de "24 horas" é outra técnica de pressão. Se fosse um prémio real, a MEO contactaria por carta ou pelo número de conta.`,
+clues:[{cls:'bad',txt:'Domínio falso: "@meo-fidelizacao-clientes.com" — a MEO usa sempre @meo.pt'},{cls:'bad',txt:'🧠 Engenharia Social: técnica de "isco" — prémio irresistível para baixar a guarda'},{cls:'bad',txt:'Taxa de envio de 4,99€ — objetivo é roubar dados do cartão, não cobrar envio'},{cls:'bad',txt:'Urgência de 24 horas — pressão para não dar tempo de verificar ou pensar'},{cls:'bad',txt:'Link aponta para "meo-premios-clientes2026.com" — domínio falso'},{cls:'tip',txt:'Prémios legítimos de operadoras nunca pedem dados de cartão por email — contactam por carta ou conta oficial'}]},
+
+/* ── REAL: Booking.com confirmação ── */
+{type:'real',displayName:'Booking.com',fromAddr:'noreply@booking.com',to:EM,subject:'Confirmação da reserva — Hotel Bairro Alto, Lisboa (3 noites)',date:'28 abr. 2026, 18:55',
+body:`<div class="org-banner" style="color:#003580;border-color:#003580">■ BOOKING.COM</div><p>Olá ${FN},</p><p>A sua reserva está confirmada! Aqui estão os detalhes:</p><div class="info-row">🏨 <strong>Hotel Bairro Alto</strong> — Lisboa, Portugal<br>📅 <strong>Check-in:</strong> 15 de maio de 2026 (após as 15h)<br>📅 <strong>Check-out:</strong> 18 de maio de 2026 (até às 12h)<br>👤 <strong>Hóspedes:</strong> 2 adultos<br>💳 <strong>Total:</strong> 387,00 € — Pagamento no hotel<br>📋 <strong>Número de reserva:</strong> 3847291045</div><p>Pode gerir a sua reserva a qualquer momento em Booking.com. Para cancelamentos gratuitos, consulte a política do alojamento.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#003580;color:#fff">Ver reserva</div><br><div class="email-link-shown safe">booking.com/myreservations</div></div><div class="email-footer-mini">Booking.com B.V. · Herengracht 597, 1017 CE Amesterdão, Países Baixos<br>Número de reserva: 3847291045</div>`,
+explanation:`Email legítimo do Booking.com. Domínio "@booking.com" oficial. Confirma uma reserva com detalhes específicos (hotel, datas, hóspedes, número de reserva único). O pagamento é no hotel — não pede dados de cartão por email. O link aponta apenas para booking.com. A Booking.com inclui sempre o número de reserva no email, visível e verificável.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@booking.com" — correto e verificável'},{cls:'good',txt:`Saudação personalizada com o nome "${FN}"`},{cls:'good',txt:'Número de reserva único (3847291045) — apenas o sistema real conhece esta informação'},{cls:'good',txt:'Pagamento no hotel — não pede dados de cartão por email'},{cls:'good',txt:'Link aponta apenas para booking.com — domínio oficial'}]},
+
+/* ── ENGENHARIA SOCIAL 3: ANSR multa falsa ── */
+{type:'phishing',displayName:'ANSR — Autoridade Nacional de Segurança Rodoviária',fromAddr:'notificacoes@ansr-contraordenacoes.net',to:EM,subject:'Notificação de contraordenação rodoviária — pagamento voluntário',date:'25 abr. 2026, 13:20',
+body:`<div class="org-banner" style="color:#374151;border-color:#374151">■ ANSR — AUTORIDADE NACIONAL DE SEGURANÇA RODOVIÁRIA</div><p>Exmo./Exma. Sr./Sra. ${N},</p><p>Na sequência de fiscalização efetuada, foi registada a seguinte contraordenação associada ao seu veículo:</p><div class="info-row">📋 <strong>Infração:</strong> Excesso de velocidade (art.º 24.º CE)<br>📍 <strong>Local:</strong> A1 — km 127,4 (sentido Lisboa-Porto)<br>📅 <strong>Data/hora:</strong> 22/04/2026 às 14:37<br>💶 <strong>Coima:</strong> 120,00 € (reduzida a <strong>60,00 €</strong> em pagamento voluntário)</div><p>O prazo para pagamento voluntário com redução de 50% <strong>termina em 10 dias</strong>. Após este prazo, a coima reverterá ao valor máximo e poderá ser instaurado processo executivo.</p><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#374151;color:#fff">Pagar coima com desconto — 60,00 €</div><br><div class="email-link-shown suspicious">http://ansr-contraordenacoes.net/pagamento/voluntario?proc=ANSR2204748</div></div><div class="email-footer-mini">ANSR — Autoridade Nacional de Segurança Rodoviária · Av. António Augusto de Aguiar 69, 1069-021 Lisboa</div>`,
+explanation:`⚠️ ENGENHARIA SOCIAL — Técnica de Autoridade + Medo. Este esquema explora o medo de consequências legais e o princípio da autoridade (entidade governamental). O domínio oficial da ANSR é "ansr.pt" — "ansr-contraordenacoes.net" é completamente falso. As notificações reais da ANSR chegam sempre por carta registada para a morada do proprietário do veículo — nunca por email. O desconto de 50% em "pagamento voluntário" é real no sistema português (e por isso torna o golpe credível), mas o processo nunca é iniciado por email com link de pagamento.`,
+clues:[{cls:'bad',txt:'Domínio falso: "@ansr-contraordenacoes.net" — o domínio oficial é ansr.pt (.gov.pt em processos formais)'},{cls:'bad',txt:'🧠 Engenharia Social: usa autoridade governamental e medo de processo legal para manipular'},{cls:'bad',txt:'Notificações reais da ANSR chegam por carta registada — nunca por email com link de pagamento'},{cls:'bad',txt:'Link aponta para "ansr-contraordenacoes.net" — domínio falso'},{cls:'tip',txt:'Para verificar multas reais, aceda a eportugal.gov.pt ou contacte diretamente a ANSR em ansr.pt'}]},
+
+/* ── REAL: Vodafone fatura ── */
+{type:'real',displayName:'Vodafone Portugal',fromAddr:'faturas@vodafone.pt',to:EM,subject:'A sua fatura Vodafone de abril de 2026 — 29,99 €',date:'2 mai. 2026, 07:30',
+body:`<div class="org-banner" style="color:#e60000;border-color:#e60000">■ VODAFONE</div><p>Olá ${N},</p><p>A sua fatura de <strong>abril de 2026</strong> já está disponível na sua área de cliente.</p><div class="info-row"><strong>Fatura de abril 2026</strong><br>📱 Plano RED MAX (ilimitado) ........ <strong>29,99 €</strong><br><strong>Data de débito:</strong> 12 de maio de 2026<br><strong>Débito automático:</strong> IBAN terminado em …2934</div><p>O valor será debitado automaticamente. Não precisa de efetuar qualquer pagamento.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#e60000;color:#fff">Ver fatura detalhada</div><br><div class="email-link-shown safe">vodafone.pt/main/particulares/myvodafone</div></div><div class="email-footer-mini">Vodafone Portugal — Comunicações Pessoais, S.A. · NIF 502 643 046 · Av. D. João II, 32, 1998-017 Lisboa<br>Linha de apoio: 1696 (gratuita para clientes Vodafone)</div>`,
+explanation:`Email legítimo da Vodafone Portugal. Domínio "@vodafone.pt" oficial. Saudação personalizada com "${N}". Mostra os últimos 4 dígitos do IBAN (…2934) — informação que apenas o sistema real conhece. Débito automático, não pede ação. Link aponta para vodafone.pt. NIF real da Vodafone Portugal verificável.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@vodafone.pt" — correto e verificável'},{cls:'good',txt:`Saudação personalizada com o nome "${N}"`},{cls:'good',txt:'Últimos 4 dígitos do IBAN (…2934) — informação que apenas o sistema real conhece'},{cls:'good',txt:'Débito automático — não pede qualquer ação nem pagamento por link'},{cls:'good',txt:'NIF real da Vodafone Portugal (502 643 046) verificável'}]},
+
+/* ── ENGENHARIA SOCIAL 4: Suporte técnico falso — vírus detetado ── */
+{type:'phishing',displayName:'Suporte Microsoft — Segurança PC',fromAddr:'alerta@microsoft-suporte-tecnico.pt',to:EM,subject:'🔴 ALERTA: Vírus crítico detetado no seu computador — ação imediata necessária',date:'26 abr. 2026, 15:38',
+body:`<div class="org-banner" style="color:#e24b4a;border-color:#e24b4a">■ MICROSOFT SUPORTE TÉCNICO</div><p>Caro utilizador,</p><p>O nosso sistema de monitorização detetou uma <strong>infeção crítica por malware</strong> no seu computador com Windows. O vírus <em>Trojan.WinLock.9182</em> foi identificado e está a tentar aceder às suas credenciais bancárias.</p><div class="alert-box">🔴 NÍVEL DE AMEAÇA: CRÍTICO — O seu sistema pode estar comprometido neste momento. Os seus dados bancários e passwords podem estar a ser recolhidos.</div><p>O nosso técnico certificado pode remover o vírus remotamente em 15 minutos. Para iniciar a sessão de suporte remoto, clique no botão abaixo e siga as instruções:</p><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#e24b4a;color:#fff">Iniciar suporte remoto urgente</div><br><div class="email-link-shown suspicious">http://microsoft-suporte-tecnico.pt/suporte-remoto/iniciar?session=MS${Math.floor(Math.random()*90000+10000)}</div></div><p style="font-size:12px;color:#6b7280">Se necessitar de apoio imediato, ligue para o nosso técnico: +351 308 802 xxx</p><div class="email-footer-mini">Microsoft Support Services — Parceiro Certificado Portugal</div>`,
+explanation:`⚠️ ENGENHARIA SOCIAL — Técnica de Intimidação por Falso Suporte Técnico (Tech Support Scam). Este é um dos golpes mais comuns em Portugal e no mundo. O atacante cria pânico com ameaças técnicas falsas (vírus, malware com nomes específicos) para levar a vítima a instalar software de acesso remoto — dando controlo total do computador ao criminoso. A Microsoft nunca monitoriza computadores individuais nem envia alertas de vírus por email. O domínio "@microsoft-suporte-tecnico.pt" é falso — a Microsoft usa @microsoft.com. Nunca instale software de acesso remoto pedido por email.`,
+clues:[{cls:'bad',txt:'Domínio falso: "@microsoft-suporte-tecnico.pt" — emails da Microsoft vêm de @microsoft.com'},{cls:'bad',txt:'🧠 Engenharia Social: falso suporte técnico — cria pânico com ameaças de vírus inventadas'},{cls:'bad',txt:'A Microsoft nunca monitoriza PCs individuais nem envia alertas de vírus por email'},{cls:'bad',txt:'Nome técnico específico ("Trojan.WinLock.9182") inventado para parecer credível'},{cls:'bad',txt:'Suporte remoto por link de email — objetivo é instalar software malicioso ou roubar dados'},{cls:'tip',txt:'Nunca instale software de acesso remoto solicitado por email — use o suporte oficial em support.microsoft.com'}]},
+
+/* ── ENGENHARIA SOCIAL 5: Falsa oferta de emprego ── */
+{type:'phishing',displayName:'Recrutamento — Grupo Sonae',fromAddr:'rh@sonae-recrutamento-portugal.com',to:EM,subject:'A sua candidatura foi selecionada — proposta de emprego Grupo Sonae',date:'24 abr. 2026, 09:47',
+body:`<div class="org-banner" style="color:#0047bb;border-color:#0047bb">■ GRUPO SONAE — RECURSOS HUMANOS</div><p>Caro/a ${FN},</p><p>Após análise cuidadosa do seu perfil profissional, temos o prazer de informar que foi <strong>selecionado/a</strong> para uma posição de Assistente Administrativo no Grupo Sonae, com início previsto para junho de 2026.</p><div class="info-row">💼 <strong>Cargo:</strong> Assistente Administrativo<br>📍 <strong>Local:</strong> Lisboa (Miraflores)<br>💶 <strong>Remuneração:</strong> 1.350 € brutos/mês + subsídio alimentação<br>📋 <strong>Contrato:</strong> Tempo indeterminado</div><p>Para avançar com o processo, precisamos que preencha o formulário de dados pessoais e envie cópias do BI/Cartão de Cidadão, NIF e comprovativo de IBAN para processamento salarial.</p><div style="margin:1rem 0"><div class="email-cta-btn" style="background:#0047bb;color:#fff">Preencher formulário de admissão</div><br><div class="email-link-shown suspicious">http://sonae-recrutamento-portugal.com/admissao/formulario?ref=RH2026</div></div><div class="email-footer-mini">Grupo Sonae — Departamento de Recursos Humanos · recrutamento@sonae-recrutamento-portugal.com</div>`,
+explanation:`⚠️ ENGENHARIA SOCIAL — Técnica de Isco com Pretexto (Fake Job Offer). Este golpe explora o desejo de obter emprego e a entidade confiante (Sonae é uma das maiores empresas portuguesas). O domínio real da Sonae é "@sonae.pt" — "sonae-recrutamento-portugal.com" é falso. O objetivo é recolher dados pessoais sensíveis (Cartão de Cidadão, NIF, IBAN) para roubo de identidade ou fraude bancária. Ofertas de emprego legítimas nunca pedem documentos pessoais por email antes de uma entrevista presencial. Se não se candidatou a esta empresa, a oferta é certamente falsa.`,
+clues:[{cls:'bad',txt:'Domínio falso: "@sonae-recrutamento-portugal.com" — a Sonae usa @sonae.pt'},{cls:'bad',txt:'🧠 Engenharia Social: falsa oferta de emprego para recolher dados de identidade (BI, NIF, IBAN)'},{cls:'bad',txt:'Pedido de documentos sensíveis por email antes de qualquer entrevista — nunca é legítimo'},{cls:'bad',txt:'Oferta não solicitada — candidaturas são habitualmente feitas pelo candidato, não ao contrário'},{cls:'bad',txt:'Link aponta para "sonae-recrutamento-portugal.com" — domínio falso'},{cls:'tip',txt:'Nunca envie cópias de documentos de identidade ou dados bancários por email para ofertas de emprego não solicitadas'}]},
+
+/* ── ENGENHARIA SOCIAL 6: Falso colega a partilhar documento ── */
+{type:'phishing',displayName:'Ana Lopes (Colega)',fromAddr:'ana.lopes@escola-partilha-docs.com',to:EM,subject:'Ana Lopes partilhou um documento contigo: "Planificação Anual 2026-27"',date:'30 abr. 2026, 11:02',
+body:`<div class="org-banner" style="color:#0f9d58;border-color:#0f9d58">■ GOOGLE DRIVE</div><p>Olá ${FN},</p><p><strong>Ana Lopes</strong> partilhou um documento contigo no Google Drive.</p><div style="background:#f8f9fb;border-radius:8px;padding:.75rem 1rem;margin:.75rem 0;display:flex;gap:12px;align-items:center"><div style="font-size:28px">📄</div><div><div style="font-size:13px;font-weight:600;color:#111827">Planificação Anual 2026-27 — Matemática 3.º Ano.docx</div><div style="font-size:11px;color:#6b7280;margin-top:2px">Partilhado por ana.lopes@escola.edu.pt · 2,4 MB</div></div></div><p style="font-size:12.5px;color:#6b7280;font-style:italic;padding:.5rem .75rem;background:#f0f4ff;border-radius:6px;border-left:3px solid #4285f4">"${FN}, podes ver e editar este documento? Precisava da tua opinião antes de amanhã. Obrigada!"</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#0f9d58;color:#fff">Abrir no Google Drive</div><br><div class="email-link-shown suspicious">http://escola-partilha-docs.com/drive/view?file=planificacao-2026&auth=gdrive</div></div><div class="email-footer-mini">Google Drive · drive.google.com<br>Para gerir partilhas, aceda a drive.google.com/settings</div>`,
+explanation:`⚠️ ENGENHARIA SOCIAL — Técnica de Pretexto com Confiança (Spear Phishing). Este esquema imita uma partilha legítima de documento de um colega. O nome "Ana Lopes" e o contexto profissional (planificação anual, 3.º ano) são escolhidos para parecer familiar e relevante. O domínio "@escola-partilha-docs.com" é falso — notificações reais do Google Drive vêm de "@google.com" ou "@drive.google.com". O link não aponta para drive.google.com mas para um site falso que rouba as credenciais Google da vítima. Partilhas reais do Google Drive têm sempre links com o domínio "drive.google.com" ou "docs.google.com".`,
+clues:[{cls:'bad',txt:'Domínio falso: "@escola-partilha-docs.com" — notificações do Google Drive vêm de @google.com'},{cls:'bad',txt:'🧠 Engenharia Social: imita um colega familiar para criar confiança e urgência ("antes de amanhã")'},{cls:'bad',txt:'Link aponta para "escola-partilha-docs.com" — domínio falso que rouba credenciais Google'},{cls:'bad',txt:'Notificações reais do Google Drive têm links com "drive.google.com" ou "docs.google.com"'},{cls:'tip',txt:'Aceda sempre ao Google Drive diretamente em drive.google.com para verificar documentos partilhados'}]},
+
+/* ── REAL: EMEL notificação ── */
+{type:'real',displayName:'EMEL — Empresa Municipal de Mobilidade',fromAddr:'notificacoes@emel.pt',to:EM,subject:'Aviso de pagamento — Estacionamento pago zona tarifada — Lisboa',date:'25 abr. 2026, 16:12',
+body:`<div class="org-banner" style="color:#005580;border-color:#005580">■ EMEL</div><p>Exmo./Exma. Sr./Sra. ${N},</p><p>Informamos que foi registada uma situação de estacionamento em zona tarifada sem título de pagamento válido.</p><div class="info-row">🚗 <strong>Matrícula:</strong> XX-00-XX (registada na sua conta)<br>📍 <strong>Local:</strong> Av. da Liberdade, Lisboa — Zona 1<br>📅 <strong>Data/hora:</strong> 24/04/2026 às 14:22<br>💶 <strong>Valor em dívida:</strong> 25,00 €<br>📋 <strong>Referência:</strong> EMEL-2026-04-847291</div><p>Pode regularizar esta situação através da área de cliente EMEL ou pelo telefone 213 507 970.</p><div style="margin:.875rem 0"><div class="email-cta-btn" style="background:#005580;color:#fff">Regularizar na área de cliente</div><br><div class="email-link-shown safe">emel.pt/utilizadores/area-cliente</div></div><p style="font-size:12px;color:#6b7280">Se considera que existe um erro, pode reclamar através da área de cliente ou presencialmente em qualquer loja EMEL.</p><div class="email-footer-mini">EMEL — Empresa Municipal de Mobilidade e Estacionamento de Lisboa, E.M. S.A. · NIF 504 971 011<br>Av. Barbosa du Bocage 45, 1049-034 Lisboa</div>`,
+explanation:`Email legítimo da EMEL. Domínio "@emel.pt" oficial. Inclui referência única (EMEL-2026-04-847291), data e local precisos — informações que apenas o sistema real conhece. Não exige pagamento imediato por link de email — direciona para a área de cliente ou telefone oficial. Inclui possibilidade de reclamação, o que é característico de comunicações legítimas. NIF real verificável.`,
+clues:[{cls:'good',txt:'Domínio oficial: "@emel.pt" — correto e pertencente à empresa municipal'},{cls:'good',txt:`Nome correto na saudação: "${N}"`},{cls:'good',txt:'Referência única com data/hora e local precisos — dados que apenas o sistema real conhece'},{cls:'good',txt:'Direciona para área de cliente ou telefone — não exige pagamento imediato por link de email'},{cls:'good',txt:'Menciona possibilidade de reclamação — comunicações legítimas oferecem sempre essa opção'}]}
+
+];}
+
+// STATE
+let userName='',userEmail='',scenarios=[],sessionOrder=[],current=0,score=0,results=[];
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function startQuiz(){
+  const n=document.getElementById('inp-name').value.trim();
+  const e=document.getElementById('inp-email').value.trim();
+  userName=n||'Formando';
+  userEmail=e||'formando@exemplo.pt';
+  scenarios=buildScenarios(userName,userEmail);
+  const allIdx=[...Array(scenarios.length).keys()];
+  shuffle(allIdx);
+  sessionOrder=allIdx.slice(0,10);
+  current=0;score=0;results=[];
+  document.getElementById('landing-screen').style.display='none';
+  document.getElementById('quiz-wrap').style.display='';
+  showEmail(0);
+}
+
+function showEmail(idx){
+  const s=scenarios[sessionOrder[idx]];
+  document.getElementById('q-subject').textContent=s.subject;
+  document.getElementById('q-dname').textContent=s.displayName;
+  document.getElementById('q-addr').textContent='<'+s.fromAddr+'>';
+  document.getElementById('q-to').textContent=s.to;
+  document.getElementById('q-date').textContent=s.date;
+  document.getElementById('q-body').innerHTML=s.body;
+  document.getElementById('cur').textContent=idx+1;
+  document.getElementById('cnt-lbl').textContent=idx+1;
+  document.getElementById('prog').style.width=(idx/10*100)+'%';
+  document.getElementById('btn-phish').disabled=false;
+  document.getElementById('btn-real').disabled=false;
+  document.getElementById('scr').textContent=score;
+  document.getElementById('quiz-screen').style.display='';
+  document.getElementById('feedback-screen').style.display='none';
+  document.getElementById('final-screen').style.display='none';
+}
+
+function answer(choice){
+  const s=scenarios[sessionOrder[current]];
+  const correct=choice===s.type;
+  if(correct)score++;
+  results.push({correct,type:s.type});
+  document.getElementById('btn-phish').disabled=true;
+  document.getElementById('btn-real').disabled=true;
+  const fb=document.getElementById('fb-box');
+  fb.className='feedback '+(correct?'correct':'wrong');
+  document.getElementById('fb-icon').textContent=correct?'✓':'✗';
+  document.getElementById('fb-verdict').textContent=correct?(s.type==='phishing'?'Correto! Era mesmo phishing.':'Correto! Email legítimo.'):(s.type==='phishing'?'Enganou-se — era phishing!':'Enganou-se — era um email legítimo!');
+  document.getElementById('fb-explain').textContent=s.explanation;
+  document.getElementById('fb-clues').innerHTML=s.clues.map(c=>`<li class="clue-item ${c.cls}">${c.txt}</li>`).join('');
+  document.getElementById('scr').textContent=score;
+  document.getElementById('next-btn').textContent=current===9?'Ver resultado final →':'Próximo email →';
+  document.getElementById('feedback-screen').style.display='';
+  document.getElementById('quiz-screen').style.display='none';
+}
+
+function nextEmail(){current++;if(current>=10){showFinal();}else{showEmail(current);}}
+
+function showFinal(){
+  document.getElementById('prog').style.width='100%';
+  document.getElementById('quiz-screen').style.display='none';
+  document.getElementById('feedback-screen').style.display='none';
+  const FN=userName.split(' ')[0];
+  let ringColor,msg,sub;
+  if(score>=9){ringColor='#059669';msg=`Excelente, ${FN}! Está muito bem preparado/a.`;sub='Identificou corretamente quase todos os emails. Partilhe este conhecimento com colegas e família — a deteção de phishing é uma das competências mais valiosas na era digital.';}
+  else if(score>=7){ringColor='#0284c7';msg='Bom resultado! Mas há margem para melhorar.';sub='Detetou a maioria corretamente. Reveja os que errou — os padrões que o enganaram são os mais usados pelos criminosos em Portugal.';}
+  else if(score>=5){ringColor='#f59e0b';msg='Resultado razoável. Vale a pena praticar mais.';sub='Detetou metade corretamente. Releia as explicações dos emails que errou — são os cenários mais perigosos e frequentes.';}
+  else{ringColor='#e24b4a';msg='Atenção — este resultado é preocupante.';sub='A maioria das pessoas cai em phishing pelo menos uma vez. Reveja todas as explicações e repita o exercício.';}
+  const missed=results.filter(r=>!r.correct).length;
+  const phishMissed=results.filter((r,i)=>!r.correct&&scenarios[sessionOrder[i]].type==='phishing').length;
+  const realMissed=results.filter((r,i)=>!r.correct&&scenarios[sessionOrder[i]].type==='real').length;
+  document.getElementById('final-screen').style.display='';
+  document.getElementById('final-screen').innerHTML=`<div class="final">
+  <div class="final-ring" style="border-color:${ringColor}"><div class="final-num" style="color:${ringColor}">${score}</div><div class="final-denom">/ 10</div></div>
+  <div class="final-msg">${msg}</div>
+  <div class="final-sub">${sub}</div>
+  <div class="result-breakdown">
+    <div class="rb-card good"><div class="rb-label">Respostas certas</div><div class="rb-val">${score}</div></div>
+    <div class="rb-card bad"><div class="rb-label">Respostas erradas</div><div class="rb-val">${missed}</div></div>
+  </div>
+  ${missed>0?`<div style="font-size:12px;color:#6b7280;margin-bottom:1rem;text-align:left;background:#f8f9fb;border-radius:8px;padding:.75rem">
+    ${phishMissed>0?`<div style="color:#991b1b;margin-bottom:4px">🚨 ${phishMissed} email${phishMissed>1?'s de phishing não detetados':' de phishing não detetado'}</div>`:''}
+    ${realMissed>0?`<div style="color:#0369a1">ℹ️ ${realMissed} email${realMissed>1?'s legítimos classificados':'s legítimo classificado'} incorretamente como phishing</div>`:''}
+  </div>`:''}
+  <div class="final-tips">
+    <div class="final-tips-title">Regras de ouro para não cair em phishing</div>
+    <div class="tip-row">Verifique sempre o endereço completo do remetente — não apenas o nome de exibição</div>
+    <div class="tip-row">Domínios oficiais do Estado usam sempre .gov.pt — nunca .com, .net ou .info</div>
+    <div class="tip-row">Bancos e serviços nunca pedem dados por email — aceda sempre pelo site oficial</div>
+    <div class="tip-row">Desconfie de urgências artificiais: "48 horas", "conta bloqueada", "ação imediata"</div>
+    <div class="tip-row">Antes de clicar, passe o cursor sobre o link para ver o URL real de destino</div>
+    <div class="tip-row">Em caso de dúvida, ligue para o número oficial — nunca use contactos do email suspeito</div>
+  </div>
+  <div class="final-btns">
+    <button class="restart-btn outline" onclick="goHome()">← Nova sessão</button>
+    <button class="restart-btn dark" onclick="repeatQuiz()">↺ Novos cenários</button>
+  </div>
+</div>`;}
+
+function repeatQuiz(){
+  const allIdx=[...Array(scenarios.length).keys()];
+  shuffle(allIdx);
+  sessionOrder=allIdx.slice(0,10);
+  current=0;score=0;results=[];
+  document.getElementById('final-screen').style.display='none';
+  document.getElementById('prog').style.width='0%';
+  showEmail(0);
+}
+
+function goHome(){
+  document.getElementById('final-screen').style.display='none';
+  document.getElementById('quiz-wrap').style.display='none';
+  document.getElementById('landing-screen').style.display='';
+}
+
+// ── BROWSER STATUS BAR SIMULATION ──
+const statusBar = document.getElementById('browser-status');
+
+function showStatus(url) {
+  statusBar.textContent = url;
+  statusBar.classList.add('visible');
+}
+
+function hideStatus() {
+  statusBar.classList.remove('visible');
+}
+
+// Event delegation on the whole document for email body buttons
+document.addEventListener('mouseover', function(e) {
+  const btn = e.target.closest('.email-cta-btn');
+  if (!btn) return;
+  // Search for the nearest .email-link-shown after this button
+  // It may be a sibling or a sibling of the parent wrapper
+  let el = btn;
+  let found = null;
+  // Walk next siblings (including through <br> tags)
+  let sibling = btn.nextSibling;
+  while (sibling && !found) {
+    if (sibling.nodeType === 1) { // element node
+      if (sibling.classList && sibling.classList.contains('email-link-shown')) {
+        found = sibling;
+      }
+    }
+    sibling = sibling.nextSibling;
+  }
+  // If not found as direct sibling, check parent's next siblings
+  if (!found) {
+    let parent = btn.parentElement;
+    if (parent) {
+      let ps = parent.nextSibling;
+      while (ps && !found) {
+        if (ps.nodeType === 1 && ps.classList && ps.classList.contains('email-link-shown')) {
+          found = ps;
+        }
+        ps = ps.nextSibling;
+      }
+    }
+  }
+  if (found) {
+    const url = found.textContent.trim();
+    showStatus(url);
+  }
+});
+
+document.addEventListener('mouseout', function(e) {
+  const btn = e.target.closest('.email-cta-btn');
+  if (btn) hideStatus();
+});
+</script>
+</html>
