@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detetive da Informação – Simulador Fake News</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --dark: #111827;
+    --mid: #1F2937;
+    --card: #FFFFFF;
+    --bg: #F3F4F6;
+    --red: #DC2626;
+    --orange: #F59E0B;
+    --green: #16A34A;
+    --green-light: #DCFCE7;
+    --red-light: #FEE2E2;
+    --body: #374151;
+    --muted: #6B7280;
+    --border: #E5E7EB;
+    --radius: 8px;
+  }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    background: var(--dark);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid var(--red);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .app-header .badge {
+    background: var(--red);
+    color: white;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    text-transform: uppercase;
+  }
+  .app-header .title {
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .app-header .title span { color: var(--orange); }
+  .progress-area { display: flex; align-items: center; gap: 12px; }
+  .progress-label { color: #9CA3AF; font-size: 12px; }
+  .progress-bar-wrap {
+    width: 140px;
+    height: 6px;
+    background: #374151;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--orange);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .score-badge {
+    background: #1F2937;
+    border: 1px solid #374151;
+    color: var(--orange);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── INTRO ── */
+  .intro-wrap {
+    max-width: 700px;
+    margin: 60px auto;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .intro-icon {
+    font-size: 56px;
+    margin-bottom: 20px;
+    display: block;
+  }
+  .intro-wrap h1 {
+    font-size: 34px;
+    font-weight: 900;
+    color: var(--dark);
+    margin-bottom: 8px;
+  }
+  .intro-wrap h1 em { color: var(--red); font-style: normal; }
+  .intro-wrap .intro-sub {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 36px;
+    line-height: 1.6;
+  }
+  .intro-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 36px;
+    text-align: left;
+  }
+  .intro-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 18px;
+    border: 1px solid var(--border);
+  }
+  .intro-card .num {
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--orange);
+    margin-bottom: 6px;
+  }
+  .intro-card p { font-size: 13px; color: var(--body); line-height: 1.5; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn-primary { background: var(--red); color: white; }
+  .btn-secondary { background: var(--dark); color: white; }
+  .btn-success { background: var(--green); color: white; }
+  .btn-outline {
+    background: transparent;
+    border: 2px solid var(--border);
+    color: var(--body);
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── GAME SCREEN ── */
+  .game-wrap {
+    max-width: 820px;
+    margin: 32px auto;
+    padding: 0 20px 60px;
+  }
+
+  /* Notícia card */
+  .noticia-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .noticia-header {
+    background: var(--dark);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .noticia-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .noticia-tipo-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: #374151;
+    color: #9CA3AF;
+  }
+
+  .noticia-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    padding: 14px 24px 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .meta-item .mi-label { font-weight: 700; color: var(--body); }
+  .meta-item .mi-val { font-style: italic; }
+  .meta-item .mi-missing {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .noticia-titulo {
+    padding: 16px 24px 6px;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--dark);
+    font-family: Georgia, serif;
+  }
+  .noticia-corpo {
+    padding: 8px 24px 20px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--body);
+  }
+
+  /* Checklist */
+  .checklist-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .checklist-header {
+    background: #F9FAFB;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .checklist-body { padding: 10px 24px 4px; }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+    border-radius: 4px;
+    margin: 0 -8px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: #F9FAFB; }
+
+  .check-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--green);
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .check-item .ci-text { flex: 1; }
+  .check-item .ci-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--dark);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .check-item .ci-hint {
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* Feedback per item */
+  .check-item .ci-feedback {
+    display: none;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 8px 12px;
+    border-radius: 5px;
+  }
+  .check-item.fb-correct .ci-feedback {
+    display: block;
+    background: var(--green-light);
+    color: #14532D;
+  }
+  .check-item.fb-wrong .ci-feedback {
+    display: block;
+    background: var(--red-light);
+    color: #7F1D1D;
+  }
+  .check-item.fb-correct { background: #F0FDF4; }
+  .check-item.fb-wrong { background: #FFF5F5; }
+
+  /* Veredicto */
+  .veredicto-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .veredicto-header {
+    background: var(--dark);
+    padding: 14px 24px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .veredicto-body {
+    padding: 20px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .veredicto-question {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-right: 8px;
+  }
+  .radio-group { display: flex; gap: 12px; }
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .radio-option:hover { border-color: var(--dark); }
+  .radio-option input { display: none; }
+  .radio-option.selected-real {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green);
+  }
+  .radio-option.selected-fake {
+    border-color: var(--red);
+    background: var(--red-light);
+    color: var(--red);
+  }
+  .radio-option.fb-correct-v {
+    border-color: var(--green);
+    background: var(--green-light);
+    color: var(--green);
+  }
+  .radio-option.fb-wrong-v {
+    border-color: var(--red);
+    background: var(--red-light);
+    color: var(--red);
+  }
+
+  /* Feedback veredicto */
+  .veredicto-feedback {
+    display: none;
+    padding: 16px 24px;
+    margin: 0 24px 20px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    font-weight: 500;
+  }
+  .veredicto-feedback.correct {
+    display: block;
+    background: var(--green-light);
+    color: #14532D;
+    border-left: 4px solid var(--green);
+  }
+  .veredicto-feedback.wrong {
+    display: block;
+    background: var(--red-light);
+    color: #7F1D1D;
+    border-left: 4px solid var(--red);
+  }
+
+  /* Actions */
+  .actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .actions-bar .left { display: flex; gap: 10px; align-items: center; }
+  .actions-bar .right { display: flex; gap: 10px; }
+
+  /* ── RESULTADO FINAL ── */
+  .result-wrap {
+    max-width: 680px;
+    margin: 40px auto;
+    padding: 0 20px 60px;
+    text-align: center;
+  }
+  .result-score-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: var(--dark);
+    border: 6px solid var(--orange);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 28px;
+  }
+  .result-score-circle .score-num {
+    font-size: 40px;
+    font-weight: 900;
+    color: var(--orange);
+    line-height: 1;
+  }
+  .result-score-circle .score-denom {
+    font-size: 14px;
+    color: #9CA3AF;
+    margin-top: 2px;
+  }
+  .result-wrap h2 {
+    font-size: 26px;
+    font-weight: 900;
+    margin-bottom: 8px;
+    color: var(--dark);
+  }
+  .result-wrap .result-msg {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+  .result-breakdown {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 28px;
+    text-align: left;
+  }
+  .rb-header {
+    background: var(--dark);
+    padding: 14px 24px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .rb-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rb-item:last-child { border-bottom: none; }
+  .rb-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 900;
+    flex-shrink: 0;
+  }
+  .rb-icon.ok { background: var(--green-light); color: var(--green); }
+  .rb-icon.ko { background: var(--red-light); color: var(--red); }
+  .rb-text { flex: 1; }
+  .rb-text .rb-title { font-size: 13.5px; font-weight: 600; color: var(--dark); }
+  .rb-text .rb-sub { font-size: 12px; color: var(--muted); }
+  .rb-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .rb-tag.real { background: var(--green-light); color: var(--green); }
+  .rb-tag.fake { background: var(--red-light); color: var(--red); }
+
+  .takeaways {
+    background: var(--dark);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    text-align: left;
+    margin-bottom: 28px;
+  }
+  .takeaways h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .takeaway-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #D1D5DB;
+    line-height: 1.5;
+  }
+  .takeaway-item .ta-dot {
+    color: var(--orange);
+    font-weight: 900;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .intro-cards { grid-template-columns: 1fr; }
+    .veredicto-body { flex-direction: column; align-items: flex-start; }
+    .app-header { padding: 12px 16px; }
+    .game-wrap, .intro-wrap { padding: 0 12px 40px; }
+    .noticia-titulo { font-size: 15px; }
+    .progress-bar-wrap { width: 80px; }
+    .score-badge { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="logo">
+    <span class="badge">Atividade</span>
+    <span class="title">Detetive da <span>Informação</span></span>
+  </div>
+  <div class="progress-area">
+    <span class="progress-label" id="progressLabel">0 / 6</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <span class="score-badge" id="scoreBadge">Pontuação: 0</span>
+  </div>
+</header>
+
+<!-- ══ ECRÃ INTRO ══ -->
+<div class="screen active" id="screenIntro">
+  <div class="intro-wrap">
+    <span class="intro-icon">🕵️</span>
+    <h1>És um Detetive da <em>Informação?</em></h1>
+    <p class="intro-sub">
+      Vais analisar <strong>6 notícias</strong>. Para cada uma, usa a checklist de critérios para decidires se é <strong>real ou fake</strong>. Regista o que observas e no final descobre a tua pontuação!
+    </p>
+    <div class="intro-cards">
+      <div class="intro-card">
+        <div class="num">01</div>
+        <p>Lê a notícia com atenção — título, fonte, data e corpo do texto.</p>
+      </div>
+      <div class="intro-card">
+        <div class="num">02</div>
+        <p>Assinala os critérios que <strong>encontras</strong> na notícia.</p>
+      </div>
+      <div class="intro-card">
+        <div class="num">03</div>
+        <p>Dá o teu <strong>veredicto</strong> final: Real ou Fake?</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="startGame()">
+      ▶ &nbsp;Começar a atividade
+    </button>
+  </div>
+</div>
+
+<!-- ══ ECRÃ JOGO ══ -->
+<div class="screen" id="screenGame">
+  <div class="game-wrap">
+    <!-- Notícia -->
+    <div class="noticia-card" id="noticiaCard">
+      <div class="noticia-header">
+        <span class="noticia-num" id="noticiaNum">NOTÍCIA 1 DE 6</span>
+        <span class="noticia-tipo-tag">Para análise</span>
+      </div>
+      <div class="noticia-meta" id="noticiaMeta"></div>
+      <div class="noticia-titulo" id="noticiaTitulo"></div>
+      <div class="noticia-corpo" id="noticiaCorpo"></div>
+    </div>
+
+    <!-- Checklist -->
+    <div class="checklist-card">
+      <div class="checklist-header">✓ &nbsp;Checklist de análise — o que encontras nesta notícia?</div>
+      <div class="checklist-body" id="checklistBody"></div>
+    </div>
+
+    <!-- Veredicto -->
+    <div class="veredicto-card">
+      <div class="veredicto-header">⚖ &nbsp;O meu veredicto final</div>
+      <div class="veredicto-body">
+        <span class="veredicto-question">Esta notícia é:</span>
+        <div class="radio-group">
+          <label class="radio-option" id="optReal" onclick="selectVeredicto('real')">
+            <input type="radio" name="veredicto" value="real">
+            ✔ &nbsp;REAL
+          </label>
+          <label class="radio-option" id="optFake" onclick="selectVeredicto('fake')">
+            <input type="radio" name="veredicto" value="fake">
+            ✖ &nbsp;FAKE
+          </label>
+        </div>
+      </div>
+      <div class="veredicto-feedback" id="veredictoFeedback"></div>
+    </div>
+
+    <!-- Ações -->
+    <div class="actions-bar">
+      <div class="left">
+        <button class="btn btn-primary" id="btnVerificar" onclick="verificar()">
+          🔍 &nbsp;Verificar
+        </button>
+        <span id="feedbackScore" style="font-size:14px; font-weight:700; display:none;"></span>
+      </div>
+      <div class="right">
+        <button class="btn btn-secondary" id="btnProximo" onclick="proximo()" style="display:none;">
+          Próxima notícia &nbsp;→
+        </button>
+        <button class="btn btn-success" id="btnResultados" onclick="showResults()" style="display:none;">
+          Ver resultados &nbsp;→
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ECRÃ RESULTADO ══ -->
+<div class="screen" id="screenResult">
+  <div class="result-wrap">
+    <div class="result-score-circle">
+      <span class="score-num" id="finalScore">0</span>
+      <span class="score-denom">de 6 pontos</span>
+    </div>
+    <h2 id="resultTitle">Resultado</h2>
+    <p class="result-msg" id="resultMsg"></p>
+
+    <div class="result-breakdown">
+      <div class="rb-header">Resumo por notícia</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="takeaways">
+      <h3>O que aprendemos</h3>
+      <div class="takeaway-item"><span class="ta-dot">›</span><span>Fontes credíveis identificam sempre o autor, a data e o meio de publicação.</span></div>
+      <div class="takeaway-item"><span class="ta-dot">›</span><span>Linguagem neutra, sem maiúsculas excessivas ou pontuação emocional (!!! ???), é sinal de jornalismo rigoroso.</span></div>
+      <div class="takeaway-item"><span class="ta-dot">›</span><span>Se não consegues verificar a notícia noutra fonte credível, não partilhes.</span></div>
+      <div class="takeaway-item"><span class="ta-dot">›</span><span>Fake news exploram o medo e a urgência para te fazer agir sem pensar. Desacelera.</span></div>
+      <div class="takeaway-item"><span class="ta-dot">›</span><span>Ferramentas úteis: Arquivo.pt · Google Imagens (pesquisa reversa) · Polígrafo · CNCS</span></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="restart()" style="margin-right:12px;">
+      ↺ &nbsp;Repetir atividade
+    </button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  DADOS DAS NOTÍCIAS
+// ══════════════════════════════════════════════════════════
+const noticias = [
+  {
+    num: 1,
+    tipo: "real",
+    fonte: "Jornal Público",
+    data: "14 de setembro de 2023",
+    autor: "Redação / Lusa",
+    dominio: "publico.pt",
+    titulo: "Governo português proíbe telemóveis nas salas de aula a partir do ano letivo 2023/2024",
+    corpo: "O Ministério da Educação publicou um despacho que proíbe o uso de telemóveis e outros dispositivos eletrónicos pessoais nas salas de aula de todos os ciclos de ensino básico e secundário. A medida prevê exceções para fins pedagógicos quando solicitado pelo docente. A decisão segue recomendações da UNESCO e o exemplo de países como França e Países Baixos, que aplicaram medidas semelhantes nos anos anteriores. Associações de pais e sindicatos de professores mostraram-se divididos quanto à eficácia prática da medida.",
+    criterios: { fonte: true, data: true, autor: true, linguagem: true, dominio: true, verificavel: true },
+    explicacoes: {
+      fonte: "Correto. O Jornal Público é um órgão de comunicação social reconhecido, regulado pela ERC e com historial jornalístico estabelecido.",
+      data: "Correto. A data é precisa (14/09/2023) e verificável no arquivo digital do jornal.",
+      autor: "Correto. A autoria está identificada (Redação e Lusa). A Lusa é a agência noticiosa oficial de Portugal.",
+      linguagem: "Correto. A linguagem é neutra e informativa. A notícia apresenta perspetivas diferentes sem tomar partido.",
+      dominio: "Correto. publico.pt é um domínio reconhecido e verificável, não um site genérico ou suspeito.",
+      verificavel: "Correto. A medida foi publicada em Diário da República e noticiada por múltiplos órgãos credíveis."
+    },
+    veredicto_exp: "Esta notícia é REAL. Reúne todos os critérios de credibilidade: fonte identificada, data precisa, autoria clara, linguagem neutra e é plenamente verificável em fontes oficiais como o Diário da República."
+  },
+  {
+    num: 2,
+    tipo: "real",
+    fonte: "Centro Nacional de Cibersegurança (CNCS)",
+    data: "Março de 2025",
+    autor: "Departamento de Comunicação do CNCS",
+    dominio: "cncs.gov.pt",
+    titulo: "Portugal registou um aumento de 23% em ataques de phishing durante 2024, revela relatório do CNCS",
+    corpo: "O Relatório de Riscos e Conflitos 2025, publicado pelo Centro Nacional de Cibersegurança, revela que os ataques de phishing aumentaram 23% face ao ano anterior em Portugal, afetando sobretudo utilizadores particulares e pequenas e médias empresas. O relatório aponta o email como principal veículo de ataque (61% dos casos), seguido de mensagens SMS. O CNCS recomenda a ativação da autenticação de dois fatores e a utilização de gestores de palavras-passe. O documento completo está disponível gratuitamente em cncs.gov.pt.",
+    criterios: { fonte: true, data: true, autor: true, linguagem: true, dominio: true, verificavel: true },
+    explicacoes: {
+      fonte: "Correto. O CNCS é o organismo público oficial de cibersegurança em Portugal, tutelado pelo Estado.",
+      data: "Correto. A data está indicada (Março de 2025) e o relatório anual é de publicação regular.",
+      autor: "Correto. A entidade responsável é identificada com clareza: Departamento de Comunicação do CNCS.",
+      linguagem: "Correto. Linguagem técnica e informativa, com dados concretos e recomendações práticas. Sem apelos emocionais.",
+      dominio: "Correto. cncs.gov.pt é um domínio governamental oficial (.gov.pt confirma a origem institucional).",
+      verificavel: "Correto. O relatório completo está publicamente disponível e pode ser descarregado em cncs.gov.pt."
+    },
+    veredicto_exp: "Esta notícia é REAL. Provém de uma fonte institucional oficial com domínio governamental, apresenta dados concretos verificáveis e o relatório está disponível ao público."
+  },
+  {
+    num: 3,
+    tipo: "fake",
+    fonte: "alertas-portugal-agora.net",
+    data: "—",
+    autor: "—",
+    dominio: "alertas-portugal-agora.net",
+    titulo: "URGENTE!!! NOVO VÍRUS NO WHATSAPP APAGA TODOS OS CONTACTOS E ACEDE À CONTA BANCÁRIA — PARTILHA JÁ ANTES QUE APAGUEM!!",
+    corpo: "ATENÇÃO a todos os portugueses!!! Um novo e perigoso vírus está a circular no WhatsApp e pode DESTRUIR o teu telemóvel e roubar TODO o dinheiro da tua conta bancária. O vírus chama-se 'GoldPickaxe PT' e está a ser ignorado pelas autoridades porque os bancos não querem que saibas. Se recebers uma mensagem com a palavra 'FATURA', NÃO ABRAS e apaga imediatamente. PARTILHA esta mensagem com todos os teus contactos antes que as grandes empresas de tecnologia a censurem. Já há mais de 500.000 vítimas em Portugal mas a comunicação social está a esconder!",
+    criterios: { fonte: false, data: false, autor: false, linguagem: false, dominio: false, verificavel: false },
+    explicacoes: {
+      fonte: "Incorreto. O site 'alertas-portugal-agora.net' não é um meio de comunicação reconhecido. O nome genérico e apelativo é um sinal de alerta.",
+      data: "Incorreto. Não existe qualquer data de publicação. Informação credível indica sempre quando foi publicada.",
+      autor: "Incorreto. Não há autor identificado. Quem escreve notícias reais assume responsabilidade pelo que publica.",
+      linguagem: "Incorreto. O uso de maiúsculas, múltiplos pontos de exclamação e expressões como 'PARTILHA JÁ' e 'antes que apaguem' são técnicas clássicas de fake news para criar pânico e urgência.",
+      dominio: "Incorreto. O domínio genérico e desconhecido não pertence a nenhum órgão de comunicação registado ou entidade oficial.",
+      verificavel: "Incorreto. Nenhuma fonte credível (CNCS, Banco de Portugal, comunicação social de referência) confirma esta informação."
+    },
+    veredicto_exp: "Esta notícia é FAKE. Acumula todos os sinais de alerta: sem fonte, sem data, sem autor, linguagem sensacionalista em maiúsculas, domínio suspeito, apelo à partilha urgente e afirmações não verificáveis."
+  },
+  {
+    num: 4,
+    tipo: "real",
+    fonte: "Banco de Portugal",
+    data: "23 de janeiro de 2025",
+    autor: "Gabinete de Comunicação do Banco de Portugal",
+    dominio: "bportugal.pt",
+    titulo: "Banco de Portugal alerta para novo esquema de phishing que imita o site oficial da instituição",
+    corpo: "O Banco de Portugal emitiu um comunicado alertando a população para a circulação de emails e mensagens SMS que imitam a identidade visual do banco, solicitando a confirmação de dados pessoais e bancários. O Banco de Portugal reforça que nunca solicita dados de acesso, palavras-passe ou confirmações de operações por email ou SMS. Os cidadãos que recebam mensagens suspeitas devem ignorá-las, não clicar em links e reportar o incidente à DECO ou à Polícia Judiciária. O comunicado completo está disponível em bportugal.pt.",
+    criterios: { fonte: true, data: true, autor: true, linguagem: true, dominio: true, verificavel: true },
+    explicacoes: {
+      fonte: "Correto. O Banco de Portugal é uma instituição oficial, parte do Sistema Europeu de Bancos Centrais.",
+      data: "Correto. Data precisa (23/01/2025) e verificável no arquivo de comunicados do Banco de Portugal.",
+      autor: "Correto. O Gabinete de Comunicação oficial é identificado como responsável pelo comunicado.",
+      linguagem: "Correto. Linguagem formal, institucional e preventiva. Fornece instruções claras sem criar pânico.",
+      dominio: "Correto. bportugal.pt é o domínio oficial do Banco de Portugal, reconhecível e verificável.",
+      verificavel: "Correto. O comunicado está publicamente disponível em bportugal.pt e foi referenciado por múltiplos meios de comunicação."
+    },
+    veredicto_exp: "Esta notícia é REAL. Provém de uma entidade oficial com domínio institucional verificável, usa linguagem formal e preventiva, e o comunicado está disponível publicamente."
+  },
+  {
+    num: 5,
+    tipo: "real",
+    fonte: "UNESCO — Organização das Nações Unidas para a Educação",
+    data: "26 de julho de 2023",
+    autor: "UNESCO (relatório institucional)",
+    dominio: "unesco.org",
+    titulo: "UNESCO recomenda a proibição de smartphones nas escolas para melhorar a concentração e a aprendizagem",
+    corpo: "O Relatório Mundial de Monitorização da Educação 2023 da UNESCO recomenda que os países proíbam o uso de smartphones nas escolas, concluindo que a presença de dispositivos móveis em sala de aula afeta negativamente a concentração dos alunos e os resultados de aprendizagem. O documento analisa dados de 200 países e defende que a tecnologia na educação deve ser usada de forma cuidadosa e pedagógica, não substituindo o ensino presencial. O relatório completo está disponível em unesco.org.",
+    criterios: { fonte: true, data: true, autor: true, linguagem: true, dominio: true, verificavel: true },
+    explicacoes: {
+      fonte: "Correto. A UNESCO é uma agência especializada da ONU reconhecida mundialmente na área da educação.",
+      data: "Correto. Data precisa (26/07/2023), correspondente à publicação do relatório anual da UNESCO.",
+      autor: "Correto. A autoria institucional está clara: UNESCO, através do seu relatório oficial de monitorização.",
+      linguagem: "Correto. Linguagem técnica e baseada em evidências. O relatório apresenta dados de 200 países com metodologia clara.",
+      dominio: "Correto. UNESCO.org é o domínio oficial da UNESCO, amplamente reconhecido.",
+      verificavel: "Correto. O relatório está disponível publicamente em unesco.org e foi amplamente noticiado por meios de referência mundiais."
+    },
+    veredicto_exp: "Esta notícia é REAL. A UNESCO é uma fonte institucional de máxima credibilidade. O relatório está publicamente disponível com metodologia clara e foi verificado por múltiplos meios internacionais."
+  },
+  {
+    num: 6,
+    tipo: "fake",
+    fonte: "Instituto Nacional de Saúde Digital",
+    data: "2024 (sem mês ou dia)",
+    autor: "Equipa de Investigação (sem nomes)",
+    dominio: "Não identificado",
+    titulo: "Cientistas portugueses provam que usar Wi-Fi público causa perda de memória permanente — estudo inédito revela dados alarmantes",
+    corpo: "Um grupo de investigadores portugueses do Instituto Nacional de Saúde Digital publicou um estudo revolucionário que demonstra que a exposição prolongada a redes Wi-Fi públicas provoca danos cerebrais irreversíveis, reduzindo a capacidade de memorização em até 60% após seis meses de uso regular. O diretor do estudo, cujo nome não foi divulgado por razões de segurança, afirmou: 'Os resultados são inequívocos e as autoridades têm de agir já.' O relatório completo não está ainda disponível ao público mas será publicado 'em breve'. Os investigadores recomendam que as pessoas evitem completamente o Wi-Fi público a partir de agora.",
+    criterios: { fonte: false, data: false, autor: false, linguagem: false, dominio: false, verificavel: false },
+    explicacoes: {
+      fonte: "Incorreto. O 'Instituto Nacional de Saúde Digital' não existe. É um nome inventado para parecer credível — tática clássica de apelo falso à autoridade.",
+      data: "Incorreto. '2024' sem mês ou dia não é uma data verificável. Estudos científicos têm datas de publicação precisas e referências DOI.",
+      autor: "Incorreto. 'Equipa de investigação' sem nomes é inaceitável em ciência. Investigadores credíveis assumem sempre a autoria dos seus trabalhos.",
+      linguagem: "Incorreto. Expressões como 'revolucionário', 'danos irreversíveis', 'as autoridades têm de agir já' e 'nome não divulgado por razões de segurança' são sinais de alarme e manipulação emocional.",
+      dominio: "Incorreto. Não existe domínio identificado onde consultar o estudo. Investigação científica legítima é publicada em revistas com peer-review e tem DOI.",
+      verificavel: "Incorreto. O relatório 'não está disponível ao público'. Uma conclusão científica que não pode ser verificada não tem valor científico — é irresponsável divulgá-la."
+    },
+    veredicto_exp: "Esta notícia é FAKE. Usa a aparência da ciência (estudo, investigadores, percentagens) para parecer credível, mas não tem nenhum dos critérios mínimos de credibilidade científica: sem autores, sem publicação, sem domínio verificável e com linguagem alarmista."
+  }
+];
+
+// ══════════════════════════════════════════════════════════
+//  ESTADO DO JOGO
+// ══════════════════════════════════════════════════════════
+let current = 0;
+let score = 0;
+let resultados = [];
+let veredictoSelecionado = null;
+let jaVerificou = false;
+
+const criterioLabels = {
+  fonte: { label: "Tem fonte claramente identificada", hint: "O órgão ou entidade que publica a notícia está identificado?" },
+  data: { label: "Tem data de publicação", hint: "A data (dia, mês e ano) está indicada no artigo?" },
+  autor: { label: "Tem autor ou entidade responsável", hint: "Quem escreveu ou assina esta notícia está identificado?" },
+  linguagem: { label: "A linguagem é neutra e sem apelos emocionais", hint: "Sem maiúsculas excessivas, sem !!!, sem expressões como 'partilha já' ou 'antes que apaguem'?" },
+  dominio: { label: "O domínio/meio é reconhecido e credível", hint: "O site ou publicação é um órgão de comunicação ou entidade oficial conhecida?" },
+  verificavel: { label: "A informação é verificável noutras fontes", hint: "Consigo confirmar esta notícia noutro meio credível ou fonte oficial?" }
+};
+
+// ══════════════════════════════════════════════════════════
+//  FUNÇÕES PRINCIPAIS
+// ══════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function updateHeader() {
+  const pct = (current / noticias.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = current + ' / ' + noticias.length;
+  document.getElementById('scoreBadge').textContent = 'Pontuação: ' + score;
+}
+
+function startGame() {
+  current = 0; score = 0; resultados = [];
+  renderCard(0);
+  showScreen('screenGame');
+  updateHeader();
+}
+
+function renderCard(idx) {
+  const n = noticias[idx];
+  veredictoSelecionado = null;
+  jaVerificou = false;
+
+  // Reset botões
+  document.getElementById('btnVerificar').style.display = 'inline-flex';
+  document.getElementById('btnProximo').style.display = 'none';
+  document.getElementById('btnResultados').style.display = 'none';
+  document.getElementById('feedbackScore').style.display = 'none';
+
+  // Reset veredicto
+  document.getElementById('optReal').className = 'radio-option';
+  document.getElementById('optFake').className = 'radio-option';
+  document.getElementById('veredictoFeedback').className = 'veredicto-feedback';
+  document.getElementById('veredictoFeedback').textContent = '';
+
+  // Notícia num
+  document.getElementById('noticiaNum').textContent = 'NOTÍCIA ' + n.num + ' DE ' + noticias.length;
+
+  // Meta
+  const meta = document.getElementById('noticiaMeta');
+  meta.innerHTML = `
+    <div class="meta-item">
+      <span class="mi-label">Fonte:</span>
+      <span class="mi-val">${n.fonte}</span>
+    </div>
+    <div class="meta-item">
+      <span class="mi-label">Data:</span>
+      <span class="mi-val">${n.data !== '—' ? n.data : 'Não indicada'}</span>
+    </div>
+    <div class="meta-item">
+      <span class="mi-label">Autor:</span>
+      <span class="mi-val">${n.autor !== '—' ? n.autor : 'Não identificado'}</span>
+    </div>
+  `;
+
+  document.getElementById('noticiaTitulo').textContent = n.titulo;
+  document.getElementById('noticiaCorpo').textContent = n.corpo;
+
+  // Checklist
+  const body = document.getElementById('checklistBody');
+  body.innerHTML = '';
+  Object.keys(criterioLabels).forEach(key => {
+    const { label, hint } = criterioLabels[key];
+    const item = document.createElement('label');
+    item.className = 'check-item';
+    item.dataset.key = key;
+    item.innerHTML = `
+      <input type="checkbox" id="chk_${key}">
+      <div class="ci-text">
+        <span class="ci-label">${label}</span>
+        <span class="ci-hint">${hint}</span>
+        <div class="ci-feedback" id="fb_${key}"></div>
+      </div>
+    `;
+    body.appendChild(item);
+  });
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectVeredicto(v) {
+  if (jaVerificou) return;
+  veredictoSelecionado = v;
+  document.getElementById('optReal').className = 'radio-option' + (v === 'real' ? ' selected-real' : '');
+  document.getElementById('optFake').className = 'radio-option' + (v === 'fake' ? ' selected-fake' : '');
+}
+
+function verificar() {
+  if (jaVerificou) return;
+  if (!veredictoSelecionado) {
+    alert('Por favor seleciona o teu veredicto: REAL ou FAKE.');
+    return;
+  }
+
+  jaVerificou = true;
+  const n = noticias[current];
+  let criteriosCorretos = 0;
+  const totalCriterios = Object.keys(criterioLabels).length;
+
+  // Avaliar cada checkbox
+  Object.keys(criterioLabels).forEach(key => {
+    const chk = document.getElementById('chk_' + key);
+    const item = chk.closest('.check-item');
+    const fb = document.getElementById('fb_' + key);
+    const userChecked = chk.checked;
+    const correto = n.criterios[key]; // O que é verdade na notícia
+
+    chk.disabled = true;
+
+    if (userChecked === correto) {
+      // Acertou na observação
+      item.classList.add('fb-correct');
+      fb.textContent = '✓ ' + n.explicacoes[key];
+      criteriosCorretos++;
+    } else {
+      // Errou a observação
+      item.classList.add('fb-wrong');
+      if (correto) {
+        fb.textContent = '✗ Este elemento EXISTE nesta notícia e é um sinal de credibilidade. ' + n.explicacoes[key];
+      } else {
+        fb.textContent = '✗ Este elemento NÃO EXISTE (ou é suspeito) nesta notícia — é um sinal de alerta! ' + n.explicacoes[key];
+      }
+    }
+  });
+
+  // Avaliar veredicto
+  const veredictoCorreto = veredictoSelecionado === n.tipo;
+  const vFeedback = document.getElementById('veredictoFeedback');
+  vFeedback.textContent = (veredictoCorreto ? '✓ Veredicto correto! ' : '✗ Veredicto incorreto. ') + n.veredicto_exp;
+  vFeedback.className = 'veredicto-feedback ' + (veredictoCorreto ? 'correct' : 'wrong');
+
+  // Estilo dos botões de rádio
+  document.getElementById('optReal').className = 'radio-option' +
+    (veredictoSelecionado === 'real' ? (veredictoCorreto ? ' fb-correct-v' : ' fb-wrong-v') : '');
+  document.getElementById('optFake').className = 'radio-option' +
+    (veredictoSelecionado === 'fake' ? (veredictoCorreto ? ' fb-correct-v' : ' fb-wrong-v') : '');
+
+  // Pontuação: só conta o veredicto final
+  const pontos = veredictoCorreto ? 1 : 0;
+  score += pontos;
+  resultados.push({ n, veredictoCorreto, criteriosCorretos, totalCriterios });
+
+  // Feedback de pontuação
+  const fsEl = document.getElementById('feedbackScore');
+  fsEl.style.display = 'inline-block';
+  if (veredictoCorreto) {
+    fsEl.style.color = '#16A34A';
+    fsEl.textContent = '+1 ponto ✓';
+  } else {
+    fsEl.style.color = '#DC2626';
+    fsEl.textContent = '0 pontos ✗';
+  }
+
+  // Botões nav
+  document.getElementById('btnVerificar').style.display = 'none';
+  updateHeader();
+
+  if (current < noticias.length - 1) {
+    document.getElementById('btnProximo').style.display = 'inline-flex';
+  } else {
+    document.getElementById('btnResultados').style.display = 'inline-flex';
+  }
+
+  // Scroll para feedback
+  setTimeout(() => {
+    document.getElementById('veredictoFeedback').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 200);
+}
+
+function proximo() {
+  current++;
+  updateHeader();
+  renderCard(current);
+}
+
+function showResults() {
+  updateHeader();
+  document.getElementById('finalScore').textContent = score;
+
+  // Título e mensagem por pontuação
+  const msgs = [
+    ['Ainda há muito a aprender!', 'Não te preocupes — a desinformação é sofisticada. Revê os sinais de alerta de cada notícia e volta a tentar!'],
+    ['Bom começo!', 'Identificaste algumas notícias corretamente. Presta atenção aos critérios de verificação — especialmente à linguagem e ao domínio.'],
+    ['Bom trabalho!', 'Tens boas bases de análise crítica. Com prática, vais afinar ainda mais o teu "radar" para fake news.'],
+    ['Muito bem!', 'Demonstraste uma boa capacidade de análise. Continua a aplicar estes critérios no dia a dia.'],
+    ['Excelente!', 'Quase perfeito! Tens um ótimo sentido crítico — és um verdadeiro detetive da informação.'],
+    ['Perfeito!', 'Parabéns! Identificaste todas as notícias corretamente. Partilha estas competências com quem te rodeia!'],
+    ['Perfeito!', 'Parabéns! Identificaste todas as notícias corretamente. És um verdadeiro Detetive da Informação!']
+  ];
+  const m = msgs[Math.min(score, 6)];
+  document.getElementById('resultTitle').textContent = m[0];
+  document.getElementById('resultMsg').textContent = m[1];
+
+  // Breakdown
+  const list = document.getElementById('breakdownList');
+  list.innerHTML = '';
+  resultados.forEach((r, i) => {
+    const item = document.createElement('div');
+    item.className = 'rb-item';
+    item.innerHTML = `
+      <div class="rb-icon ${r.veredictoCorreto ? 'ok' : 'ko'}">${r.veredictoCorreto ? '✓' : '✗'}</div>
+      <div class="rb-text">
+        <div class="rb-title">Notícia ${i + 1}: ${r.n.titulo.substring(0, 65)}${r.n.titulo.length > 65 ? '…' : ''}</div>
+        <div class="rb-sub">Checklist: ${r.criteriosCorretos} de ${r.totalCriterios} observações corretas · Veredicto: ${r.veredictoCorreto ? 'correto' : 'incorreto'}</div>
+      </div>
+      <span class="rb-tag ${r.n.tipo}">${r.n.tipo.toUpperCase()}</span>
+    `;
+    list.appendChild(item);
+  });
+
+  showScreen('screenResult');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restart() {
+  current = 0; score = 0; resultados = [];
+  updateHeader();
+  showScreen('screenIntro');
+  window.scrollTo({ top: 0 });
+}
+
+// Init
+updateHeader();
+</script>
+</body>
+</html>
