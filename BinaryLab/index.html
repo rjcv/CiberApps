@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BináriLab</title>
+<style>
+  :root {
+    --bg: #1c2333; --surface: #242e42; --surface2: #2d3a52;
+    --border: #3d4f6b; --accent: #79b8ff; --accent2: #56d364;
+    --accent3: #f78166; --accent4: #d2a8ff; --text: #e6edf3;
+    --muted: #8fa3c0; --highlight: #388bfd26;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 14px; }
+  .logo { font-size: 28px; }
+  header h1 { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+  header p { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+
+  .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); overflow-x: auto; }
+  .tab { padding: 12px 20px; cursor: pointer; font-size: .85rem; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .panel { display: none; padding: 22px; max-width: 860px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: .95rem; font-weight: 700; margin-bottom: 12px; color: var(--accent); }
+  .card h3 { font-size: .88rem; font-weight: 600; margin: 14px 0 8px; color: var(--accent4); }
+  .card p { font-size: .84rem; color: var(--muted); line-height: 1.7; margin-bottom: 8px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card ul, .card ol { padding-left: 18px; }
+  .card li { font-size: .84rem; color: var(--muted); line-height: 1.7; margin-bottom: 4px; }
+  strong.hl { color: var(--text); }
+
+  /* Bit toggle */
+  .bit-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 14px 0; }
+  .bit-btn {
+    width: 52px; height: 62px; border-radius: 10px; border: 2px solid var(--border);
+    background: var(--surface2); cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px; transition: all .15s; user-select: none;
+  }
+  .bit-btn:hover { border-color: var(--accent); }
+  .bit-btn.on { background: #1f6feb33; border-color: var(--accent); }
+  .bit-val { font-size: 1.4rem; font-weight: 700; font-family: monospace; color: var(--muted); }
+  .bit-btn.on .bit-val { color: var(--accent); }
+  .bit-pos { font-size: .65rem; color: var(--muted); }
+  .bit-pow { font-size: .68rem; color: var(--accent4); }
+
+  .result-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+  .result-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; text-align: center; }
+  .result-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .result-val { font-size: 1.5rem; font-weight: 700; font-family: monospace; color: var(--accent2); margin-top: 2px; }
+  .result-val.accent { color: var(--accent); }
+  .result-val.purple { color: var(--accent4); }
+
+  /* ASCII table */
+  .ascii-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 5px; max-height: 280px; overflow-y: auto; }
+  .ascii-cell { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px; text-align: center; cursor: pointer; transition: all .15s; }
+  .ascii-cell:hover, .ascii-cell.selected { border-color: var(--accent); background: #1f6feb22; }
+  .ascii-char { font-size: 1rem; font-weight: 700; color: var(--text); }
+  .ascii-dec { font-size: .65rem; color: var(--accent4); }
+  .ascii-bin { font-size: .6rem; color: var(--accent2); font-family: monospace; }
+
+  /* Division steps */
+  .div-steps { margin: 12px 0; }
+  .div-row { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; margin-bottom: 4px; font-family: monospace; font-size: .84rem; }
+  .div-row:nth-child(odd) { background: var(--surface2); }
+  .div-num { width: 50px; text-align: right; color: var(--text); font-weight: 600; }
+  .div-op { color: var(--muted); }
+  .div-res { width: 50px; color: var(--accent); }
+  .div-rest { width: 50px; }
+  .rest-0 { color: var(--muted); }
+  .rest-1 { color: var(--accent2); font-weight: 700; }
+  .div-arrow { margin-left: auto; font-size: .72rem; color: var(--muted); }
+
+  /* Powers breakdown */
+  .powers-row { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin: 10px 0; }
+  .pow-cell { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; text-align: center; min-width: 52px; }
+  .pow-cell.active { border-color: var(--accent2); background: #1f6b2922; }
+  .pow-cell.inactive { opacity: .35; }
+  .pow-bit { font-size: .8rem; font-family: monospace; font-weight: 700; }
+  .pow-cell.active .pow-bit { color: var(--accent2); }
+  .pow-exp { font-size: .65rem; color: var(--accent4); }
+  .pow-val { font-size: .72rem; color: var(--muted); }
+
+  /* Quiz */
+  .quiz-question { font-size: 1.1rem; font-weight: 600; text-align: center; margin: 12px 0; color: var(--text); font-family: monospace; letter-spacing: 2px; }
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .quiz-opt { background: var(--surface2); border: 2px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; font-size: .9rem; font-weight: 600; font-family: monospace; transition: all .15s; }
+  .quiz-opt:hover { border-color: var(--accent); }
+  .quiz-opt.correct { border-color: var(--accent2); background: #1f6b2933; color: var(--accent2); }
+  .quiz-opt.wrong { border-color: var(--accent3); background: #8b1a1a22; color: var(--accent3); }
+  .quiz-feedback { text-align: center; padding: 10px; border-radius: 8px; font-size: .88rem; margin-top: 10px; display: none; }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: #1f6b2922; color: var(--accent2); }
+  .quiz-feedback.nok { background: #8b1a1a22; color: var(--accent3); }
+  .quiz-score { display: flex; gap: 16px; justify-content: center; margin-bottom: 14px; }
+  .score-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 20px; text-align: center; }
+  .score-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; }
+  .score-val { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+
+  /* Guide */
+  .guide-section { margin-bottom: 24px; }
+  .guide-section h2 { font-size: 1rem; font-weight: 700; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .info-box { background: var(--highlight); border: 1px solid #388bfd44; border-radius: 8px; padding: 12px 16px; margin: 10px 0; }
+  .info-box p { font-size: .82rem; color: #a5c9ff; line-height: 1.7; }
+  .table-simple { width: 100%; border-collapse: collapse; font-size: .82rem; margin: 10px 0; }
+  .table-simple th { background: var(--surface2); color: var(--muted); padding: 7px 12px; text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .5px; }
+  .table-simple td { padding: 7px 12px; border-top: 1px solid var(--border); color: var(--text); font-family: monospace; }
+  .table-simple tr:hover td { background: var(--surface2); }
+
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+  .badge-blue { background: #1f6feb33; color: var(--accent); }
+  .badge-green { background: #1f6b2933; color: var(--accent2); }
+  .badge-purple { background: #2d1f6f33; color: var(--accent4); }
+
+  button { background: var(--accent); color: #000; border: none; border-radius: 8px; padding: 9px 20px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  button:hover { opacity: .85; }
+  button.sec { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  button.sec:hover { border-color: var(--accent); }
+  .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+
+  label { font-size: .78rem; color: var(--muted); display: block; margin-bottom: 5px; }
+  input[type=number], input[type=text] { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 9px 14px; font-size: .9rem; outline: none; transition: border-color .2s; font-family: monospace; width: 100%; }
+  input:focus { border-color: var(--accent); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width:560px) { .two-col { grid-template-columns: 1fr; } .quiz-options { grid-template-columns: 1fr; } }
+  .mt10 { margin-top: 10px; }
+  .mt14 { margin-top: 14px; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔢</div>
+  <div>
+    <h1>BináriLab — Laboratório de Código Binário</h1>
+    <p>Compreende e pratica o sistema binário e o código ASCII</p>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('explore')">🔀 Explorar Bits</div>
+  <div class="tab" onclick="showTab('convert')">🔄 Converter</div>
+  <div class="tab" onclick="showTab('ascii')">🔤 ASCII</div>
+  <div class="tab" onclick="showTab('quiz')">🎯 Quiz</div>
+  <div class="tab" onclick="showTab('guide')">📖 Guia</div>
+</div>
+
+<!-- ═══ EXPLORAR BITS ═══ -->
+<div id="panel-explore" class="panel active">
+  <div class="card">
+    <h2>🔀 Constrói o teu número em binário</h2>
+    <p>Clica nos bits para os ligar (1) ou desligar (0) e vê o número que estás a formar.</p>
+    <div class="bit-row" id="bit-btns"></div>
+    <div class="result-row">
+      <div class="result-box"><div class="result-label">Binário</div><div class="result-val accent" id="exp-bin">00000000</div></div>
+      <div class="result-box"><div class="result-label">Decimal</div><div class="result-val" id="exp-dec">0</div></div>
+      <div class="result-box"><div class="result-label">Hex</div><div class="result-val purple" id="exp-hex">00</div></div>
+      <div class="result-box"><div class="result-label">ASCII</div><div class="result-val" id="exp-ascii" style="color:var(--accent4)">—</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>⚡ Valor de cada bit</h2>
+    <p style="margin-bottom:10px">Cada posição vale o dobro da anterior. Ligar um bit adiciona esse valor ao total.</p>
+    <div class="powers-row" id="pow-cells"></div>
+    <div class="info-box mt10">
+      <p id="pow-formula">Soma: 0</p>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="sec" onclick="setAllBits(0)">Limpar</button>
+    <button class="sec" onclick="setAllBits(1)">Todos a 1</button>
+    <button onclick="randomBits()">🎲 Aleatório</button>
+  </div>
+</div>
+
+<!-- ═══ CONVERTER ═══ -->
+<div id="panel-convert" class="panel">
+  <div class="two-col">
+    <div class="card">
+      <h2>🔢 Decimal → Binário</h2>
+      <label>Escreve um número (0–255)</label>
+      <input type="number" id="d2b-input" min="0" max="255" value="65" oninput="d2bUpdate()">
+      <div class="div-steps" id="d2b-steps"></div>
+      <div class="result-box mt10 center">
+        <div class="result-label">Resultado binário</div>
+        <div class="result-val accent" id="d2b-result">—</div>
+      </div>
+      <div class="info-box mt10">
+        <p>💡 Divide por 2 repetidamente e lê os restos <strong>de baixo para cima</strong>.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h2>💻 Binário → Decimal</h2>
+      <label>Escreve um número binário (ex: 01001011)</label>
+      <input type="text" id="b2d-input" maxlength="8" value="01000001" oninput="b2dUpdate()">
+      <div class="powers-row mt10" id="b2d-cells" style="justify-content:flex-start"></div>
+      <div class="result-box mt10 center">
+        <div class="result-label">Resultado decimal</div>
+        <div class="result-val" id="b2d-result">—</div>
+      </div>
+      <div class="info-box mt10">
+        <p>💡 Multiplica cada bit pela sua potência de 2 e soma tudo.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ASCII ═══ -->
+<div id="panel-ascii" class="panel">
+  <div class="card">
+    <h2>🔤 Tabela ASCII — Letras e Números</h2>
+    <p style="margin-bottom:12px">Clica num carácter para ver o seu valor decimal e binário em detalhe.</p>
+    <div class="ascii-grid" id="ascii-grid"></div>
+  </div>
+  <div class="card" id="ascii-detail" style="display:none">
+    <h2>🔬 Detalhe do carácter</h2>
+    <div class="result-row">
+      <div class="result-box"><div class="result-label">Carácter</div><div class="result-val purple" id="asc-char">A</div></div>
+      <div class="result-box"><div class="result-label">Decimal</div><div class="result-val" id="asc-dec">65</div></div>
+      <div class="result-box"><div class="result-label">Binário</div><div class="result-val accent" id="asc-bin">01000001</div></div>
+      <div class="result-box"><div class="result-label">Hex</div><div class="result-val" style="color:var(--accent4)" id="asc-hex">41</div></div>
+    </div>
+    <div class="powers-row mt10" id="asc-powers"></div>
+    <div class="info-box mt10"><p id="asc-note"></p></div>
+  </div>
+  <div class="card">
+    <h2>✍️ Converter texto para binário</h2>
+    <label>Escreve uma palavra ou frase</label>
+    <input type="text" id="txt2bin-input" value="Olá" oninput="txt2binUpdate()">
+    <div id="txt2bin-out" style="margin-top:12px; font-family:monospace; font-size:.78rem; line-height:2; word-break:break-all; color:var(--accent2)"></div>
+  </div>
+</div>
+
+<!-- ═══ QUIZ ═══ -->
+<div id="panel-quiz" class="panel">
+  <div class="quiz-score">
+    <div class="score-box"><div class="score-label">Certas</div><div class="score-val" id="q-correct" style="color:var(--accent2)">0</div></div>
+    <div class="score-box"><div class="score-label">Erradas</div><div class="score-val" id="q-wrong" style="color:var(--accent3)">0</div></div>
+    <div class="score-box"><div class="score-label">Pergunta</div><div class="score-val" id="q-num">1</div></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px">
+      <span class="badge badge-blue" id="q-type-badge">Decimal → Binário</span>
+    </div>
+    <p class="center" style="color:var(--muted);font-size:.82rem" id="q-instruction">Qual é o binário deste número?</p>
+    <div class="quiz-question" id="q-question">65</div>
+    <div class="quiz-options" id="q-options"></div>
+    <div class="quiz-feedback" id="q-feedback"></div>
+    <div class="btn-row mt10">
+      <button class="sec" onclick="newQuiz()" id="q-next" style="display:none">Próxima →</button>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="sec" onclick="setQuizMode('d2b')">Decimal → Binário</button>
+    <button class="sec" onclick="setQuizMode('b2d')">Binário → Decimal</button>
+    <button class="sec" onclick="setQuizMode('asc')">Número → Letra ASCII</button>
+  </div>
+</div>
+
+<!-- ═══ GUIA ═══ -->
+<div id="panel-guide" class="panel">
+
+  <div class="card guide-section">
+    <h2>💡 O que é o sistema binário?</h2>
+    <p>Os computadores só entendem dois estados elétricos: <strong class="hl">0</strong> (sem corrente, desligado) e <strong class="hl">1</strong> (com corrente, ligado). A tudo o que existe num computador — textos, imagens, sons — está representado com sequências destes 0s e 1s. A isso chamamos <strong class="hl">sistema binário</strong>.</p>
+    <p>Escolheu-se o binário porque é muito fácil de implementar fisicamente: um transistor ou está ligado ou está desligado. Com só dois estados, há menos margem para erros elétricos.</p>
+    <div class="info-box">
+      <p>💡 É parecido com um interruptor de luz: só pode estar ligado (1) ou desligado (0). Um computador tem milhares de milhões destes "interruptores".</p>
+    </div>
+  </div>
+
+  <div class="card guide-section">
+    <h2>📐 Como funciona a matemática da conversão?</h2>
+    <p>O sistema decimal que usamos no dia a dia é de <strong class="hl">base 10</strong> — cada posição vale 10 vezes mais que a anterior (1, 10, 100, 1000...). O binário é de <strong class="hl">base 2</strong> — cada posição vale o dobro da anterior:</p>
+    <table class="table-simple">
+      <tr><th>Posição (da direita)</th><th>Potência</th><th>Valor</th></tr>
+      <tr><td>1ª</td><td>2⁰</td><td>1</td></tr>
+      <tr><td>2ª</td><td>2¹</td><td>2</td></tr>
+      <tr><td>3ª</td><td>2²</td><td>4</td></tr>
+      <tr><td>4ª</td><td>2³</td><td>8</td></tr>
+      <tr><td>5ª</td><td>2⁴</td><td>16</td></tr>
+      <tr><td>6ª</td><td>2⁵</td><td>32</td></tr>
+      <tr><td>7ª</td><td>2⁶</td><td>64</td></tr>
+      <tr><td>8ª</td><td>2⁷</td><td>128</td></tr>
+    </table>
+    <h3>Decimal → Binário: dividir por 2</h3>
+    <p>Divide o número por 2 sucessivamente, guardando os restos. Lê os restos <strong class="hl">de baixo para cima</strong>. Os restos só podem ser 0 ou 1, porque ao dividir por 2 um número inteiro ou é par (resto 0) ou é ímpar (resto 1).</p>
+    <p><strong class="hl">Exemplo com 65:</strong> 65÷2=32 resto 1 → 32÷2=16 resto 0 → ... → resultado: <span style="color:var(--accent2);font-family:monospace">01000001</span></p>
+    <h3>Binário → Decimal: somar potências de 2</h3>
+    <p>Multiplica cada bit (0 ou 1) pelo valor da sua posição e soma tudo. Por exemplo, <span style="font-family:monospace;color:var(--accent)">01000001</span> = 64 + 1 = <strong class="hl">65</strong>.</p>
+  </div>
+
+  <div class="card guide-section">
+    <h2>🔤 O que é o código ASCII?</h2>
+    <p>Os computadores só trabalham com números. Então, alguém tinha de decidir: <em>"qual é o número que representa a letra 'A'?"</em></p>
+    <p>Em 1963, um comité de engenheiros americanos criou uma tabela padrão chamada <strong class="hl">ASCII</strong> (American Standard Code for Information Interchange) que atribui um número a cada letra, dígito e símbolo, para que diferentes computadores e máquinas conseguissem comunicar entre si.</p>
+    <table class="table-simple">
+      <tr><th>Carácter</th><th>Decimal</th><th>Binário</th></tr>
+      <tr><td>A</td><td>65</td><td>01000001</td></tr>
+      <tr><td>B</td><td>66</td><td>01000010</td></tr>
+      <tr><td>a</td><td>97</td><td>01100001</td></tr>
+      <tr><td>Z</td><td>90</td><td>01011010</td></tr>
+      <tr><td>0</td><td>48</td><td>00110000</td></tr>
+      <tr><td>!</td><td>33</td><td>00100001</td></tr>
+    </table>
+    <div class="info-box">
+      <p>💡 A diferença entre 'A' (65) e 'a' (97) é exatamente 32 — em binário significa que só muda <strong>um único bit</strong>. Não foi acidente: foi uma escolha inteligente que simplificava as conversões maiúsculas/minúsculas.</p>
+    </div>
+    <p>A atribuição de números a letras foi uma <strong class="hl">convenção</strong> — uma decisão tomada em conjunto pela indústria. Podia ter sido diferente. O importante é que toda a gente usa a mesma tabela.</p>
+  </div>
+
+  <div class="card guide-section">
+    <h2>📦 Porquê 8 bits = 1 byte?</h2>
+    <p>Nos primeiros computadores existiam máquinas com bytes de 6, 7 ou 9 bits. Não havia um padrão universal. O 8 ganhou por várias razões práticas:</p>
+    <ul>
+      <li><strong class="hl">É uma potência de 2</strong> — 8 = 2³, encaixa perfeitamente na lógica binária.</li>
+      <li><strong class="hl">Chega para o ASCII e sobra</strong> — o ASCII precisa de 7 bits (128 caracteres). Com 8 bits tens 256 combinações, espaço para acentos e símbolos extra.</li>
+      <li><strong class="hl">A IBM decidiu</strong> — em 1964, o IBM System/360 usou bytes de 8 bits. Como a IBM dominava o mercado, o resto da indústria seguiu.</li>
+      <li><strong class="hl">É divisível de forma conveniente</strong> — 8 bits divide-se em 2 grupos de 4 (nibbles), simplificando o design do hardware.</li>
+    </ul>
+    <div class="info-box">
+      <p>💡 É parecido com o teclado QWERTY — não é necessariamente o melhor design possível, mas está tão universal que substituí-lo seria impraticável. Uma convenção que se tornou padrão mundial.</p>
+    </div>
+  </div>
+
+  <div class="card guide-section">
+    <h2>🌍 E hoje em dia?</h2>
+    <p>Hoje usamos maioritariamente <strong class="hl">UTF-8</strong>, uma extensão do ASCII que suporta todos os alfabetos do mundo — incluindo o 'ã' e o 'ç' do português, os caracteres chineses, os emojis, e muito mais. Os primeiros 128 caracteres do UTF-8 são exatamente os mesmos do ASCII original de 1963.</p>
+    <p>Mas por baixo de tudo, continuamos com os mesmos 0s e 1s que os engenheiros de 1963 escolheram.</p>
+  </div>
+
+</div>
+
+<script>
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const bits = [0,0,0,0,0,0,0,0];
+const pows = [128,64,32,16,8,4,2,1];
+
+// ─── TABS ───
+function showTab(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ─── EXPLORE BITS ───
+function initBits() {
+  const row = document.getElementById('bit-btns');
+  const pow = document.getElementById('pow-cells');
+  row.innerHTML = ''; pow.innerHTML = '';
+  for (let i=0;i<8;i++) {
+    const b = document.createElement('div');
+    b.className='bit-btn'; b.id='bit-'+i;
+    b.innerHTML=`<span class="bit-pow">2<sup>${7-i}</sup></span><span class="bit-val">0</span><span class="bit-pos">bit ${7-i}</span>`;
+    b.onclick=()=>toggleBit(i);
+    row.appendChild(b);
+    const p = document.createElement('div');
+    p.className='pow-cell inactive'; p.id='pow-'+i;
+    p.innerHTML=`<div class="pow-bit">0</div><div class="pow-exp">2<sup>${7-i}</sup></div><div class="pow-val">${pows[i]}</div>`;
+    pow.appendChild(p);
+  }
+  updateBits();
+}
+function toggleBit(i) {
+  bits[i]=bits[i]?0:1;
+  updateBits();
+}
+function setAllBits(v) { for(let i=0;i<8;i++) bits[i]=v; updateBits(); }
+function randomBits() { for(let i=0;i<8;i++) bits[i]=Math.random()>.5?1:0; updateBits(); }
+function updateBits() {
+  let dec=0;
+  for(let i=0;i<8;i++) {
+    const btn=document.getElementById('bit-'+i);
+    const pc=document.getElementById('pow-'+i);
+    btn.className='bit-btn'+(bits[i]?' on':'');
+    btn.querySelector('.bit-val').textContent=bits[i];
+    pc.className='pow-cell'+(bits[i]?' active':' inactive');
+    pc.querySelector('.pow-bit').textContent=bits[i];
+    if(bits[i]) dec+=pows[i];
+  }
+  const binStr=bits.join('');
+  document.getElementById('exp-bin').textContent=binStr;
+  document.getElementById('exp-dec').textContent=dec;
+  document.getElementById('exp-hex').textContent=dec.toString(16).padStart(2,'0').toUpperCase();
+  const asc=(dec>=32&&dec<127)?String.fromCharCode(dec):'—';
+  document.getElementById('exp-ascii').textContent=asc;
+  const activePows=[];
+  for(let i=0;i<8;i++) if(bits[i]) activePows.push(`${pows[i]}`);
+  const formula = activePows.length ? activePows.join(' + ')+' = '+dec : 'Soma: 0';
+  document.getElementById('pow-formula').textContent=formula;
+}
+
+// ─── DECIMAL → BINÁRIO ───
+function d2bUpdate() {
+  let n=parseInt(document.getElementById('d2b-input').value)||0;
+  n=Math.max(0,Math.min(255,n));
+  const steps=[];
+  let tmp=n;
+  if(tmp===0) steps.push({n:0,res:0,r:0});
+  while(tmp>0) { steps.push({n:tmp,res:Math.floor(tmp/2),r:tmp%2}); tmp=Math.floor(tmp/2); }
+  let html='';
+  for(let i=0;i<steps.length;i++) {
+    const s=steps[i];
+    const arrow=i===steps.length-1?'← primeiro bit (MSB)':'';
+    html+=`<div class="div-row">
+      <span class="div-num">${s.n}</span>
+      <span class="div-op">÷ 2 =</span>
+      <span class="div-res">${s.res}</span>
+      <span class="div-op">resto</span>
+      <span class="div-rest ${s.r?'rest-1':'rest-0'}">${s.r}</span>
+      <span class="div-arrow">${arrow}</span>
+    </div>`;
+  }
+  document.getElementById('d2b-steps').innerHTML=html;
+  document.getElementById('d2b-result').textContent=n.toString(2).padStart(8,'0');
+}
+
+// ─── BINÁRIO → DECIMAL ───
+function b2dUpdate() {
+  const raw=document.getElementById('b2d-input').value.replace(/[^01]/g,'').slice(0,8);
+  document.getElementById('b2d-input').value=raw;
+  const padded=raw.padStart(8,'0');
+  let dec=0; const parts=[];
+  const cont=document.getElementById('b2d-cells');
+  cont.innerHTML='';
+  for(let i=0;i<padded.length;i++) {
+    const bit=parseInt(padded[i]);
+    const p=Math.pow(2,7-i);
+    if(bit) { dec+=p; parts.push(p); }
+    const cell=document.createElement('div');
+    cell.className='pow-cell'+(bit?' active':' inactive');
+    cell.innerHTML=`<div class="pow-bit">${bit}</div><div class="pow-exp">2<sup>${7-i}</sup></div><div class="pow-val">${p}</div>`;
+    cont.appendChild(cell);
+  }
+  document.getElementById('b2d-result').textContent=dec+(parts.length?' ('+parts.join('+')+')':'');
+}
+
+// ─── ASCII TABLE ───
+function initAscii() {
+  const grid=document.getElementById('ascii-grid');
+  grid.innerHTML='';
+  const chars=[];
+  for(let i=48;i<=57;i++) chars.push(i);
+  for(let i=65;i<=90;i++) chars.push(i);
+  for(let i=97;i<=122;i++) chars.push(i);
+  for(const code of chars) {
+    const c=String.fromCharCode(code);
+    const bin=code.toString(2).padStart(8,'0');
+    const cell=document.createElement('div');
+    cell.className='ascii-cell'; cell.id='asc-'+code;
+    cell.innerHTML=`<div class="ascii-char">${c}</div><div class="ascii-dec">${code}</div><div class="ascii-bin">${bin}</div>`;
+    cell.onclick=()=>selectAscii(code);
+    grid.appendChild(cell);
+  }
+}
+function selectAscii(code) {
+  document.querySelectorAll('.ascii-cell').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('asc-'+code)?.classList.add('selected');
+  const c=String.fromCharCode(code);
+  const bin=code.toString(2).padStart(8,'0');
+  document.getElementById('asc-char').textContent=c;
+  document.getElementById('asc-dec').textContent=code;
+  document.getElementById('asc-bin').textContent=bin;
+  document.getElementById('asc-hex').textContent=code.toString(16).toUpperCase().padStart(2,'0');
+  const pc=document.getElementById('asc-powers');
+  pc.innerHTML='';
+  let parts=[];
+  for(let i=0;i<8;i++) {
+    const bit=parseInt(bin[i]);
+    const p=Math.pow(2,7-i);
+    if(bit) parts.push(p);
+    const cell=document.createElement('div');
+    cell.className='pow-cell'+(bit?' active':' inactive');
+    cell.innerHTML=`<div class="pow-bit">${bit}</div><div class="pow-exp">2<sup>${7-i}</sup></div><div class="pow-val">${p}</div>`;
+    pc.appendChild(cell);
+  }
+  let note=`'${c}' = ${code} = ${parts.join(' + ')} = ${bin} em binário.`;
+  if(code>=65&&code<=90) note+=` É maiúscula. A versão minúscula '${c.toLowerCase()}' é ${code+32} (diferença de 32).`;
+  if(code>=97&&code<=122) note+=` É minúscula. A versão maiúscula '${c.toUpperCase()}' é ${code-32} (diferença de 32).`;
+  if(code>=48&&code<=57) note+=` É o dígito ${c}, mas o seu código é ${code}, não ${c} — não confundir o número com o seu código ASCII!`;
+  document.getElementById('asc-note').textContent=note;
+  document.getElementById('ascii-detail').style.display='block';
+}
+function txt2binUpdate() {
+  const txt=document.getElementById('txt2bin-input').value.slice(0,20);
+  let html='';
+  for(const c of txt) {
+    const code=c.charCodeAt(0);
+    const bin=code.toString(2).padStart(8,'0');
+    html+=`<span style="margin-right:12px" title="${c} = ${code}"><span style="color:var(--accent4)">${c}</span><span style="color:var(--muted)">→</span>${bin} </span>`;
+  }
+  document.getElementById('txt2bin-out').innerHTML=html||'<span style="color:var(--muted)">Escreve algo...</span>';
+}
+
+// ─── QUIZ ───
+let qMode='d2b', qCorrect=0, qWrong=0, qNum=1, qAnswered=false;
+const qModeLabels={d2b:'Decimal → Binário',b2d:'Binário → Decimal',asc:'Número → Letra ASCII'};
+function setQuizMode(m) { qMode=m; newQuiz(); }
+function newQuiz() {
+  qAnswered=false;
+  document.getElementById('q-next').style.display='none';
+  document.getElementById('q-feedback').className='quiz-feedback';
+  document.getElementById('q-num').textContent=qNum;
+  document.getElementById('q-type-badge').textContent=qModeLabels[qMode];
+  const opts=[];
+  let question, correct, instruction;
+  if(qMode==='d2b') {
+    const n=Math.floor(Math.random()*128)+1;
+    question=n; correct=n.toString(2).padStart(8,'0');
+    instruction='Qual é a representação binária deste número?';
+    opts.push(correct);
+    while(opts.length<4) { const r=Math.floor(Math.random()*128)+1; const b=r.toString(2).padStart(8,'0'); if(!opts.includes(b)) opts.push(b); }
+  } else if(qMode==='b2d') {
+    const n=Math.floor(Math.random()*128)+1;
+    const bin=n.toString(2).padStart(8,'0');
+    question=bin; correct=String(n);
+    instruction='Qual é o valor decimal deste número binário?';
+    opts.push(correct);
+    while(opts.length<4) { const r=Math.floor(Math.random()*128)+1; const s=String(r); if(!opts.includes(s)) opts.push(s); }
+  } else {
+    const chars=[...'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'];
+    const c=chars[Math.floor(Math.random()*chars.length)];
+    const code=c.charCodeAt(0);
+    question=code; correct=c;
+    instruction='Que letra ou dígito representa este código ASCII?';
+    opts.push(correct);
+    while(opts.length<4) { const rc=chars[Math.floor(Math.random()*chars.length)]; if(!opts.includes(rc)) opts.push(rc); }
+  }
+  opts.sort(()=>Math.random()-.5);
+  document.getElementById('q-question').textContent=question;
+  document.getElementById('q-instruction').textContent=instruction;
+  const optsCont=document.getElementById('q-options');
+  optsCont.innerHTML='';
+  for(const o of opts) {
+    const btn=document.createElement('div');
+    btn.className='quiz-opt'; btn.textContent=o;
+    btn.onclick=()=>answerQuiz(o,correct,btn);
+    optsCont.appendChild(btn);
+  }
+}
+function answerQuiz(chosen, correct, btn) {
+  if(qAnswered) return;
+  qAnswered=true;
+  const fb=document.getElementById('q-feedback');
+  if(chosen===correct) {
+    btn.classList.add('correct');
+    fb.textContent='✅ Correto!'; fb.className='quiz-feedback show ok';
+    qCorrect++; document.getElementById('q-correct').textContent=qCorrect;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.quiz-opt').forEach(b=>{ if(b.textContent===correct) b.classList.add('correct'); });
+    fb.textContent=`❌ Errado. A resposta correta era: ${correct}`; fb.className='quiz-feedback show nok';
+    qWrong++; document.getElementById('q-wrong').textContent=qWrong;
+  }
+  qNum++;
+  document.getElementById('q-next').style.display='inline-block';
+}
+
+// ─── INIT ───
+initBits();
+d2bUpdate();
+b2dUpdate();
+initAscii();
+selectAscii(65);
+txt2binUpdate();
+newQuiz();
+</script>
+</body>
+</html>
