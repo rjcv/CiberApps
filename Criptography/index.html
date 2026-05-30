@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CriptoLab</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #f78166;
+    --accent4: #d2a8ff;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --highlight: #388bfd26;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .logo { font-size: 28px; }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  header p { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+
+  .tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border);
+    background: var(--surface); overflow-x: auto;
+  }
+  .tab {
+    padding: 13px 22px; cursor: pointer; font-size: .85rem; font-weight: 500;
+    color: var(--muted); border-bottom: 2px solid transparent; transition: all .2s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .panel { display: none; padding: 24px; max-width: 900px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 18px;
+  }
+  .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+  .card p, .card li { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+  .card ul { padding-left: 16px; }
+
+  label { font-size: .8rem; color: var(--muted); display: block; margin-bottom: 5px; }
+  textarea, input[type=text] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); padding: 10px 14px; font-size: .9rem;
+    resize: vertical; outline: none; transition: border-color .2s;
+    font-family: 'Courier New', monospace;
+  }
+  textarea:focus, input[type=text]:focus { border-color: var(--accent); }
+  textarea { min-height: 80px; }
+
+  input[type=range] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+  .row { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 200px; }
+
+  .output-box {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-family: 'Courier New', monospace; font-size: .9rem;
+    min-height: 80px; word-break: break-all; color: var(--accent2);
+    white-space: pre-wrap; position: relative;
+  }
+  .output-label {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--muted); margin-bottom: 5px;
+  }
+
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: .72rem;
+    font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .badge-blue { background: #1f6feb33; color: var(--accent); }
+  .badge-green { background: #1f6b2933; color: var(--accent2); }
+  .badge-red { background: #8b1a1a33; color: var(--accent3); }
+  .badge-purple { background: #2d1f6f33; color: var(--accent4); }
+
+  /* Caesar wheel */
+  .wheel-container { display: flex; justify-content: center; margin: 16px 0; position: relative; }
+  canvas#wheel { border-radius: 50%; }
+
+  /* Alphabet mapping table */
+  .alpha-table { display: flex; flex-direction: column; gap: 4px; overflow-x: auto; }
+  .alpha-row { display: flex; gap: 2px; }
+  .alpha-cell {
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    border-radius: 5px; font-size: .75rem; font-family: monospace; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .alpha-plain { background: #1f6feb22; color: var(--accent); border: 1px solid #1f6feb55; }
+  .alpha-cipher { background: #1f6b2922; color: var(--accent2); border: 1px solid #1f6b2955; }
+  .alpha-active { background: var(--accent) !important; color: #000 !important; }
+  .alpha-active-c { background: var(--accent2) !important; color: #000 !important; }
+
+  /* Step-by-step visualization */
+  .steps { display: flex; gap: 0; flex-wrap: wrap; margin-top: 10px; }
+  .step-char {
+    text-align: center; padding: 6px 4px; min-width: 32px;
+    border-radius: 6px; margin: 2px;
+    font-family: monospace; font-size: .85rem;
+  }
+  .step-plain { background: #1f6feb22; border: 1px solid #1f6feb44; }
+  .step-cipher { background: #1f6b2922; border: 1px solid #1f6b2944; color: var(--accent2); }
+  .step-space { opacity: .4; }
+  .step-label { font-size: .65rem; color: var(--muted); display: block; }
+  .step-val { font-weight: 700; font-size: .9rem; }
+
+  /* Vigenere key display */
+  .key-display { display: flex; gap: 3px; flex-wrap: wrap; margin: 8px 0; }
+  .key-badge {
+    padding: 3px 9px; border-radius: 4px; font-family: monospace; font-size: .8rem;
+    font-weight: 700; background: #2d1f6f33; color: var(--accent4);
+    border: 1px solid #6e40c933;
+  }
+
+  /* XOR display */
+  .xor-grid { overflow-x: auto; }
+  .xor-row { display: flex; gap: 2px; margin-bottom: 2px; }
+  .xor-cell {
+    min-width: 52px; padding: 4px 6px; border-radius: 4px; font-family: monospace;
+    font-size: .72rem; text-align: center; flex-shrink: 0;
+  }
+  .xor-head { background: var(--surface2); color: var(--muted); font-size: .65rem; }
+  .xor-plain { background: #1f6feb15; color: var(--accent); border: 1px solid #1f6feb33; }
+  .xor-key { background: #2d1f6f22; color: var(--accent4); border: 1px solid #6e40c933; }
+  .xor-result { background: #1f6b2922; color: var(--accent2); border: 1px solid #1f6b2944; }
+
+  button {
+    background: var(--accent); color: #000; border: none; border-radius: 8px;
+    padding: 9px 20px; font-size: .85rem; font-weight: 600; cursor: pointer;
+    transition: opacity .2s;
+  }
+  button:hover { opacity: .85; }
+  button.sec { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  button.sec:hover { border-color: var(--accent); color: var(--accent); }
+
+  .shift-display {
+    text-align: center; font-size: 2rem; font-weight: 700; color: var(--accent);
+    margin: 6px 0 2px;
+  }
+  .shift-sub { text-align: center; font-size: .75rem; color: var(--muted); }
+
+  .info-box {
+    background: var(--highlight); border: 1px solid #388bfd44; border-radius: 8px;
+    padding: 12px 16px; margin-top: 14px;
+  }
+  .info-box p { font-size: .82rem; color: #a5c9ff; line-height: 1.6; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:600px) { .two-col { grid-template-columns: 1fr; } }
+
+  .freq-bar-wrap { margin-top: 8px; }
+  .freq-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+  .freq-letter { width: 18px; font-family: monospace; font-size: .8rem; color: var(--accent); font-weight: 700; }
+  .freq-bar { height: 14px; border-radius: 3px; background: var(--accent); transition: width .3s; min-width: 2px; }
+  .freq-count { font-size: .72rem; color: var(--muted); }
+
+  .tag { display: inline-flex; align-items: center; gap: 5px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot-blue { background: var(--accent); }
+  .dot-green { background: var(--accent2); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .mt8 { margin-top: 8px; }
+  .mt12 { margin-top: 12px; }
+  .flex-end { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔐</div>
+  <div>
+    <h1>CriptoLab — Laboratório de Criptografia</h1>
+    <p>Explora e experimenta cifras clássicas passo a passo</p>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('caesar')">🏛️ Cifra de César</div>
+  <div class="tab" onclick="showTab('vigenere')">🔑 Cifra de Vigenère</div>
+  <div class="tab" onclick="showTab('xor')">⚡ XOR</div>
+  <div class="tab" onclick="showTab('freq')">📊 Análise de Frequência</div>
+  <div class="tab" onclick="showTab('about')">📖 Guia</div>
+</div>
+
+<!-- ═══════════ CÉSAR ═══════════ -->
+<div id="panel-caesar" class="panel active">
+  <div class="card">
+    <h2>🏛️ Cifra de César <span class="badge badge-blue">Substituição Simples</span></h2>
+    <p>Cada letra é deslocada um número fixo de posições no alfabeto. Utilizada por Júlio César para comunicações militares (deslocamento de 3).</p>
+  </div>
+
+  <div class="card">
+    <label>Texto original (plaintext)</label>
+    <textarea id="c-plain" placeholder="Escreve aqui o teu texto..." oninput="caesarUpdate()">Segurança informática</textarea>
+    <div class="row mt8" style="align-items:center">
+      <div class="col">
+        <label>Deslocamento: <strong id="c-shift-val" style="color:var(--accent)">3</strong></label>
+        <input type="range" id="c-shift" min="1" max="25" value="3" oninput="caesarUpdate()">
+      </div>
+      <div style="text-align:center; min-width:80px">
+        <div class="shift-display" id="c-shift-big">3</div>
+        <div class="shift-sub">ROT-3</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="output-label">🔒 Texto cifrado</div>
+      <div class="output-box" id="c-cipher">—</div>
+      <div class="flex-end">
+        <button class="sec" onclick="caesarSwap()">⇄ Inverter</button>
+        <button onclick="caesarCopy()">Copiar</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="output-label">🔓 Texto decifrado</div>
+      <div class="output-box" id="c-decipher" style="color:var(--accent)">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🗺️ Mapeamento do Alfabeto</h2>
+    <p style="margin-bottom:10px">Texto original <span class="dot dot-blue" style="margin:0 4px"></span> → Texto cifrado <span class="dot dot-green" style="margin:0 4px"></span></p>
+    <div class="alpha-table">
+      <div class="alpha-row" id="alpha-plain"></div>
+      <div class="alpha-row" id="alpha-cipher"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔬 Visualização Letra a Letra</h2>
+    <div class="steps" id="c-steps"></div>
+    <div class="info-box mt8">
+      <p>💡 <strong>Fórmula:</strong> C = (P + deslocamento) mod 26 &nbsp;|&nbsp; P = (C − deslocamento + 26) mod 26</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ VIGENÈRE ═══════════ -->
+<div id="panel-vigenere" class="panel">
+  <div class="card">
+    <h2>🔑 Cifra de Vigenère <span class="badge badge-purple">Substituição Polialfabética</span></h2>
+    <p>Usa uma palavra-chave para aplicar deslocamentos diferentes a cada letra, tornando-a muito mais resistente à análise de frequência do que a cifra de César.</p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="col">
+        <label>Texto original (plaintext)</label>
+        <textarea id="v-plain" placeholder="Escreve o texto..." oninput="vigUpdate()">Criptografia clássica</textarea>
+      </div>
+      <div class="col">
+        <label>Palavra-chave (key)</label>
+        <input type="text" id="v-key" value="CHAVE" oninput="vigUpdate()" style="height:42px">
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="output-label">🔒 Texto cifrado</div>
+      <div class="output-box" id="v-cipher">—</div>
+    </div>
+    <div class="card">
+      <div class="output-label">🔓 Texto decifrado</div>
+      <div class="output-box" id="v-decipher" style="color:var(--accent)">—</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔬 Visualização Letra a Letra</h2>
+    <p style="margin-bottom:8px;font-size:.8rem;color:var(--muted)">A chave repete-se ciclicamente ao longo do texto.</p>
+    <div id="v-key-display" class="key-display"></div>
+    <div id="v-steps" class="steps mt8"></div>
+    <div class="info-box mt8">
+      <p>💡 <strong>Fórmula:</strong> C<sub>i</sub> = (P<sub>i</sub> + K<sub>i</sub>) mod 26 &nbsp;|&nbsp; Cada letra da chave define um deslocamento diferente.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📐 Tabela de Vigenère (parcial)</h2>
+    <p style="margin-bottom:10px;font-size:.8rem;color:var(--muted)">Intersecção entre letra do texto e letra da chave dá a letra cifrada.</p>
+    <div id="v-table" style="overflow:auto; font-size:.7rem; font-family:monospace;"></div>
+  </div>
+</div>
+
+<!-- ═══════════ XOR ═══════════ -->
+<div id="panel-xor" class="panel">
+  <div class="card">
+    <h2>⚡ Cifra XOR <span class="badge badge-green">Operação Binária</span></h2>
+    <p>A cifra XOR (ou exclusivo) opera ao nível dos bits. É a base de muitos algoritmos modernos (AES, RC4, OTP). A mesma operação cifra e decifra.</p>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="col">
+        <label>Texto original</label>
+        <input type="text" id="x-plain" value="Olá" oninput="xorUpdate()">
+      </div>
+      <div class="col">
+        <label>Chave (key)</label>
+        <input type="text" id="x-key" value="K" oninput="xorUpdate()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔬 Operação Bit a Bit</h2>
+    <div id="x-grid" class="xor-grid"></div>
+    <div class="info-box mt8">
+      <p>💡 <strong>XOR:</strong> 0⊕0=0, 0⊕1=1, 1⊕0=1, 1⊕1=0 &nbsp;|&nbsp; Aplicar a mesma chave duas vezes recupera o original.</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="output-label">🔒 Resultado cifrado (hex)</div>
+      <div class="output-box" id="x-cipher">—</div>
+    </div>
+    <div class="card">
+      <div class="output-label">🔓 Decifrado (XOR novamente)</div>
+      <div class="output-box" id="x-decipher" style="color:var(--accent)">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ FREQUÊNCIA ═══════════ -->
+<div id="panel-freq" class="panel">
+  <div class="card">
+    <h2>📊 Análise de Frequência <span class="badge badge-red">Criptanálise</span></h2>
+    <p>Nas cifras de substituição simples, a frequência das letras é preservada. Em português, o 'A' e o 'E' são as mais comuns. Isso permite quebrar a cifra!</p>
+  </div>
+
+  <div class="card">
+    <label>Texto para analisar</label>
+    <textarea id="f-text" style="min-height:100px" oninput="freqUpdate()">VHJXUDQFD LQIRUPDWLFD H FULEUWRJUDILD</textarea>
+    <div class="flex-end mt8">
+      <button class="sec" onclick="loadFreqSample('pt')">Exemplo PT</button>
+      <button class="sec" onclick="loadFreqSample('cipher')">Texto cifrado</button>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h2>📈 Frequência do texto</h2>
+      <div id="freq-bars" class="freq-bar-wrap"></div>
+    </div>
+    <div class="card">
+      <h2>📚 Freq. típica Português</h2>
+      <div id="freq-pt-bars" class="freq-bar-wrap"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="info-box">
+      <p>🕵️ <strong>Como quebrar uma cifra de César por análise de frequência:</strong><br>
+      1. Conta as letras mais frequentes no texto cifrado.<br>
+      2. Em português, as mais comuns são A, E, O, S, R.<br>
+      3. Se a letra mais frequente no texto cifrado for 'I', provavelmente representa 'E' → deslocamento de 4.<br>
+      4. Testa o deslocamento encontrado e verifica se o resultado faz sentido.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GUIA ═══════════ -->
+<div id="panel-about" class="panel">
+  <div class="card">
+    <h2>📖 O que é a Criptografia?</h2>
+    <p>A <strong style="color:var(--text)">criptografia</strong> é a ciência de proteger informação através de transformações matemáticas, tornando-a ilegível para quem não possui a chave. Existem dois grandes tipos:</p>
+    <ul style="margin-top:10px">
+      <li><strong style="color:var(--accent)">Criptografia Simétrica:</strong> A mesma chave cifra e decifra (ex: AES, DES). Rápida, mas o problema é partilhar a chave.</li>
+      <li style="margin-top:6px"><strong style="color:var(--accent4)">Criptografia Assimétrica:</strong> Duas chaves — pública (cifra) e privada (decifra). Ex: RSA, ECC. Resolve o problema da distribuição.</li>
+    </ul>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h2>🏛️ Cifra de César</h2>
+      <p><strong style="color:var(--text)">Tipo:</strong> Substituição monoalfabética<br>
+      <strong style="color:var(--text)">Chave:</strong> Número inteiro (1-25)<br>
+      <strong style="color:var(--text)">Segurança:</strong> Muito fraca — só 25 possibilidades<br>
+      <strong style="color:var(--text)">ROT13:</strong> Caso especial com deslocamento 13<br>
+      <strong style="color:var(--text)">Uso histórico:</strong> Comunicações militares romanas</p>
+    </div>
+    <div class="card">
+      <h2>🔑 Cifra de Vigenère</h2>
+      <p><strong style="color:var(--text)">Tipo:</strong> Substituição polialfabética<br>
+      <strong style="color:var(--text)">Chave:</strong> Palavra (repete-se ciclicamente)<br>
+      <strong style="color:var(--text)">Segurança:</strong> Melhor que César, mas vulnerável ao Teste de Kasiski<br>
+      <strong style="color:var(--text)">Alcunha histórica:</strong> "le chiffre indéchiffrable"</p>
+    </div>
+    <div class="card">
+      <h2>⚡ XOR</h2>
+      <p><strong style="color:var(--text)">Tipo:</strong> Operação binária bit a bit<br>
+      <strong style="color:var(--text)">Chave:</strong> Qualquer sequência de bytes<br>
+      <strong style="color:var(--text)">Propriedade:</strong> A⊕K⊕K = A (reversível)<br>
+      <strong style="color:var(--text)">Uso moderno:</strong> Parte fundamental do AES e outros cifras modernos</p>
+    </div>
+    <div class="card">
+      <h2>📊 Análise de Frequência</h2>
+      <p><strong style="color:var(--text)">O quê:</strong> Técnica de criptanálise<br>
+      <strong style="color:var(--text)">Ideia:</strong> Letras têm frequências previsíveis numa língua<br>
+      <strong style="color:var(--text)">Eficaz contra:</strong> Cifras de substituição simples<br>
+      <strong style="color:var(--text)">Invenção:</strong> Al-Kindi, século IX d.C.</p>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🗺️ Evolução da Criptografia</h2>
+    <div style="position:relative; padding-left:20px; margin-top:8px;">
+      <div style="position:absolute;left:6px;top:0;bottom:0;width:2px;background:var(--border)"></div>
+      <div id="timeline"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+// ─── TABS ───
+function showTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ─── CAESAR ───
+function caesarChar(ch, shift, decrypt=false) {
+  const upper = ch.toUpperCase();
+  if (!ALPHA.includes(upper)) return ch;
+  const idx = ALPHA.indexOf(upper);
+  const newIdx = decrypt ? (idx - shift + 26) % 26 : (idx + shift) % 26;
+  const result = ALPHA[newIdx];
+  return ch === upper ? result : result.toLowerCase();
+}
+function caesarText(text, shift, decrypt=false) {
+  return text.split('').map(c => caesarChar(c, shift, decrypt)).join('');
+}
+function caesarUpdate() {
+  const plain = document.getElementById('c-plain').value;
+  const shift = parseInt(document.getElementById('c-shift').value);
+  document.getElementById('c-shift-val').textContent = shift;
+  document.getElementById('c-shift-big').textContent = shift;
+  const cipher = caesarText(plain, shift, false);
+  const decipher = caesarText(cipher, shift, true);
+  document.getElementById('c-cipher').textContent = cipher;
+  document.getElementById('c-decipher').textContent = decipher;
+  renderAlphaMap(shift);
+  renderCaesarSteps(plain, shift);
+}
+function caesarSwap() {
+  const cipher = document.getElementById('c-cipher').textContent;
+  document.getElementById('c-plain').value = cipher;
+  caesarUpdate();
+}
+function caesarCopy() {
+  navigator.clipboard.writeText(document.getElementById('c-cipher').textContent);
+}
+function renderAlphaMap(shift) {
+  const pRow = document.getElementById('alpha-plain');
+  const cRow = document.getElementById('alpha-cipher');
+  pRow.innerHTML = ''; cRow.innerHTML = '';
+  for (let i = 0; i < 26; i++) {
+    const pc = document.createElement('div');
+    pc.className = 'alpha-cell alpha-plain'; pc.textContent = ALPHA[i];
+    const cc = document.createElement('div');
+    cc.className = 'alpha-cell alpha-cipher'; cc.textContent = ALPHA[(i + shift) % 26];
+    pRow.appendChild(pc); cRow.appendChild(cc);
+  }
+}
+function renderCaesarSteps(text, shift) {
+  const cont = document.getElementById('c-steps');
+  cont.innerHTML = '';
+  const limited = text.slice(0, 30);
+  for (const ch of limited) {
+    const upper = ch.toUpperCase();
+    const isLetter = ALPHA.includes(upper);
+    const div = document.createElement('div');
+    div.className = 'step-char step-plain' + (isLetter ? '' : ' step-space');
+    if (isLetter) {
+      const idx = ALPHA.indexOf(upper);
+      const nIdx = (idx + shift) % 26;
+      div.innerHTML = `<span class="step-label">${idx}</span><span class="step-val">${ch}</span><span class="step-label">↓</span>`;
+      const div2 = document.createElement('div');
+      div2.className = 'step-char step-cipher';
+      div2.innerHTML = `<span class="step-label">${nIdx}</span><span class="step-val">${upper === ch ? ALPHA[nIdx] : ALPHA[nIdx].toLowerCase()}</span><span class="step-label">+${shift}</span>`;
+      cont.appendChild(div); cont.appendChild(div2);
+    } else {
+      div.innerHTML = `<span class="step-label">&nbsp;</span><span class="step-val">${ch}</span><span class="step-label">&nbsp;</span>`;
+      cont.appendChild(div);
+    }
+  }
+}
+
+// ─── VIGENÈRE ───
+function vigUpdate() {
+  const plain = document.getElementById('v-plain').value;
+  const rawKey = document.getElementById('v-key').value.toUpperCase().replace(/[^A-Z]/g, '') || 'A';
+  const cipher = vigCrypt(plain, rawKey, false);
+  const decipher = vigCrypt(cipher, rawKey, true);
+  document.getElementById('v-cipher').textContent = cipher;
+  document.getElementById('v-decipher').textContent = decipher;
+  renderVigSteps(plain, rawKey);
+  renderVigTable(rawKey);
+}
+function vigCrypt(text, key, decrypt) {
+  let ki = 0, out = '';
+  for (const ch of text) {
+    const upper = ch.toUpperCase();
+    if (ALPHA.includes(upper)) {
+      const shift = ALPHA.indexOf(key[ki % key.length]);
+      const idx = ALPHA.indexOf(upper);
+      const nIdx = decrypt ? (idx - shift + 26) % 26 : (idx + shift) % 26;
+      out += ch === upper ? ALPHA[nIdx] : ALPHA[nIdx].toLowerCase();
+      ki++;
+    } else out += ch;
+  }
+  return out;
+}
+function renderVigSteps(text, key) {
+  const cont = document.getElementById('v-steps');
+  const kd = document.getElementById('v-key-display');
+  cont.innerHTML = ''; kd.innerHTML = '';
+  let ki = 0;
+  const limited = text.slice(0, 28);
+  for (const ch of limited) {
+    const upper = ch.toUpperCase();
+    if (ALPHA.includes(upper)) {
+      const kch = key[ki % key.length];
+      const kb = document.createElement('div');
+      kb.className = 'key-badge'; kb.textContent = kch;
+      kd.appendChild(kb);
+      const shift = ALPHA.indexOf(kch);
+      const idx = ALPHA.indexOf(upper);
+      const nIdx = (idx + shift) % 26;
+      const d1 = document.createElement('div');
+      d1.className = 'step-char step-plain';
+      d1.innerHTML = `<span class="step-label" style="color:var(--accent4)">${kch}(${shift})</span><span class="step-val">${ch}</span><span class="step-label">↓</span>`;
+      const d2 = document.createElement('div');
+      d2.className = 'step-char step-cipher';
+      d2.innerHTML = `<span class="step-label">${nIdx}</span><span class="step-val">${ch === upper ? ALPHA[nIdx] : ALPHA[nIdx].toLowerCase()}</span><span class="step-label">&nbsp;</span>`;
+      cont.appendChild(d1); cont.appendChild(d2);
+      ki++;
+    } else {
+      const d = document.createElement('div');
+      d.className = 'step-char step-space';
+      d.innerHTML = `<span class="step-label">&nbsp;</span><span class="step-val">${ch}</span><span class="step-label">&nbsp;</span>`;
+      cont.appendChild(d);
+    }
+  }
+}
+function renderVigTable(key) {
+  const tbl = document.getElementById('v-table');
+  const rows = Math.min(key.length + 1, 8);
+  let html = '<div style="display:flex;gap:2px;margin-bottom:2px">';
+  html += '<div style="width:28px;font-size:.65rem;color:var(--muted);text-align:center">K\P</div>';
+  for (let i = 0; i < 26; i++) {
+    html += `<div style="width:20px;text-align:center;color:var(--muted);font-size:.65rem">${ALPHA[i]}</div>`;
+  }
+  html += '</div>';
+  for (let r = 0; r < rows; r++) {
+    const kch = key[r % key.length];
+    const shift = ALPHA.indexOf(kch);
+    html += `<div style="display:flex;gap:2px;margin-bottom:2px">`;
+    html += `<div style="width:28px;text-align:center;color:var(--accent4);font-weight:700;font-size:.75rem">${kch}</div>`;
+    for (let i = 0; i < 26; i++) {
+      const enc = ALPHA[(i + shift) % 26];
+      html += `<div style="width:20px;text-align:center;font-size:.7rem;color:var(--accent2)">${enc}</div>`;
+    }
+    html += '</div>';
+  }
+  tbl.innerHTML = html;
+}
+
+// ─── XOR ───
+function toBin(n) { return n.toString(2).padStart(8, '0'); }
+function xorUpdate() {
+  const plain = document.getElementById('x-plain').value.slice(0, 6);
+  const keyRaw = document.getElementById('x-key').value || 'K';
+  const grid = document.getElementById('x-grid');
+  const cipherHex = [], decrypted = [];
+  let html = '';
+  // header
+  html += '<div class="xor-row"><div class="xor-cell xor-head">Letra</div><div class="xor-cell xor-head">Binário</div><div class="xor-cell xor-head">Chave</div><div class="xor-cell xor-head">Bin. Chave</div><div class="xor-cell xor-head">XOR</div><div class="xor-cell xor-head">Hex</div></div>';
+  for (let i = 0; i < plain.length; i++) {
+    const pc = plain.charCodeAt(i);
+    const kc = keyRaw.charCodeAt(i % keyRaw.length);
+    const xored = pc ^ kc;
+    cipherHex.push(xored.toString(16).padStart(2,'0').toUpperCase());
+    decrypted.push(String.fromCharCode(xored ^ kc));
+    html += `<div class="xor-row">
+      <div class="xor-cell xor-plain">'${plain[i]}'</div>
+      <div class="xor-cell xor-plain">${toBin(pc)}</div>
+      <div class="xor-cell xor-key">'${keyRaw[i % keyRaw.length]}'</div>
+      <div class="xor-cell xor-key">${toBin(kc)}</div>
+      <div class="xor-cell xor-result">${toBin(xored)}</div>
+      <div class="xor-cell xor-result">${xored.toString(16).padStart(2,'0').toUpperCase()}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+  document.getElementById('x-cipher').textContent = cipherHex.join(' ');
+  document.getElementById('x-decipher').textContent = decrypted.join('');
+}
+
+// ─── FREQUENCY ───
+const PT_FREQ = {A:14.6,E:12.6,O:10.7,S:7.8,R:6.5,I:6.2,N:5.1,D:5.0,M:4.7,T:4.3,U:4.1,C:3.9,L:2.8,P:2.5,V:1.6,G:1.3,H:1.3,B:1.0,F:1.0,Q:1.2,Z:0.5,J:0.4,X:0.2,K:0.1,Y:0.1,W:0.1};
+function freqUpdate() {
+  const text = document.getElementById('f-text').value.toUpperCase().replace(/[^A-Z]/g,'');
+  const counts = {};
+  for (const c of ALPHA) counts[c] = 0;
+  for (const c of text) if (counts[c] !== undefined) counts[c]++;
+  const total = text.length || 1;
+  const sorted = ALPHA.split('').sort((a,b) => counts[b]-counts[a]);
+  const bars = document.getElementById('freq-bars');
+  bars.innerHTML = '';
+  const maxC = Math.max(...Object.values(counts), 1);
+  for (const c of sorted.slice(0, 12)) {
+    if (counts[c] === 0) continue;
+    const pct = (counts[c]/maxC*160).toFixed(0);
+    bars.innerHTML += `<div class="freq-bar-row"><span class="freq-letter">${c}</span><div class="freq-bar" style="width:${pct}px;background:var(--accent2)"></div><span class="freq-count">${counts[c]} (${(counts[c]/total*100).toFixed(1)}%)</span></div>`;
+  }
+  const ptBars = document.getElementById('freq-pt-bars');
+  ptBars.innerHTML = '';
+  const ptSorted = Object.entries(PT_FREQ).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const maxPT = ptSorted[0][1];
+  for (const [c, pct] of ptSorted) {
+    ptBars.innerHTML += `<div class="freq-bar-row"><span class="freq-letter">${c}</span><div class="freq-bar" style="width:${(pct/maxPT*160).toFixed(0)}px"></div><span class="freq-count">${pct.toFixed(1)}%</span></div>`;
+  }
+}
+function loadFreqSample(type) {
+  if (type === 'pt') {
+    document.getElementById('f-text').value = 'A segurança informática é uma área fundamental na proteção de dados e sistemas contra acessos não autorizados';
+  } else {
+    document.getElementById('f-text').value = caesarText('A segurança informática é uma área fundamental na proteção de dados e sistemas', 7, false).toUpperCase();
+  }
+  freqUpdate();
+}
+
+// ─── TIMELINE ───
+const events = [
+  {year:'~1500 a.C.', text:'Primeiros usos de cifras substitutivas no Egito Antigo', color:'var(--accent)'},
+  {year:'~50 a.C.', text:'Júlio César usa a sua famosa cifra de deslocamento', color:'var(--accent)'},
+  {year:'Séc. IX', text:'Al-Kindi inventa a análise de frequência', color:'var(--accent4)'},
+  {year:'1467', text:'Alberti cria a primeira cifra polialfabética', color:'var(--accent4)'},
+  {year:'Séc. XVI', text:'Cifra de Vigenère torna-se padrão diplomático', color:'var(--accent4)'},
+  {year:'1918', text:'Arthur Scherbius inventa a máquina Enigma', color:'var(--accent2)'},
+  {year:'1945', text:'Turing e Bletchley quebram o Enigma na WWII', color:'var(--accent2)'},
+  {year:'1976', text:'Diffie e Hellman publicam a criptografia de chave pública', color:'var(--accent3)'},
+  {year:'1977', text:'RSA — primeiro sistema assimétrico prático', color:'var(--accent3)'},
+  {year:'2001', text:'AES adotado como padrão global pelo NIST', color:'var(--accent3)'},
+];
+document.getElementById('timeline').innerHTML = events.map(e =>
+  `<div style="margin-bottom:14px;position:relative">
+    <div style="font-size:.78rem;font-weight:700;color:${e.color}">${e.year}</div>
+    <div style="font-size:.8rem;color:var(--muted)">${e.text}</div>
+  </div>`
+).join('');
+
+// ─── INIT ───
+caesarUpdate();
+vigUpdate();
+xorUpdate();
+freqUpdate();
+</script>
+</body>
+</html>
